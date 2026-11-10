@@ -1,0 +1,86 @@
+# BitForge — contracts (Robinhood Chain 4663, ETH gas, ALL-FREE)
+
+## What this is
+Single NFT contract (`src/BitForge.sol`). No token, no pool, no burn, no
+market contract, no paid mint. Secondary trading is on OpenSea only.
+
+## Design (all decided by juragan 2026-11-10)
+- Supply 3,131 = 3,000 public free + 131 team.
+- Free mint: PoW puzzle, 1/wallet, open to ANY wallet (no Agent ID gate).
+- Rarity = COLOR COUNT: Common 2 colors, Rare 3, Epic 4, Legendary 6.
+  Totals: Common 2,035 / Rare 730 / Epic 313 / Legendary 53.
+  Public 3,000: C1,950 / R700 / E300 / L50.
+  Team 131: C85 / R30 / E13 / L3 — treasury 100 (C67/R22/E10/L1),
+  personal 31 (C18/R8/E3/L2, dealt round-robin so the 2 personal
+  Legendary land on the first 2 wallets; every personal wallet gets
+  at least one Epic or Legendary). Team rarities are DETERMINISTIC
+  (assigned in the constructor), never random — Cinder's personal 31
+  got 0 Legendary; that cannot recur here.
+- Puzzle tiers rescaled for 3,000 free mints: EASY 18 bits (#1–600),
+  MEDIUM 23 (#601–1,500), HARD 28 (#1,501–2,700), SUPERHARD 32 (#2,701–3,000).
+- Mint window: 7 days (DEFAULT — confirm before deploy).
+- Owner powers ONLY: finalize() (time-locked, closes mint, no payouts —
+  all free) + rotatePuzzle() (emergency). No pause, no setPrice, no
+  setBaseURI, no upgrade, no withdraw.
+- baseURI set ONCE in the constructor (no setter). PLACEHOLDER now:
+  `https://nftarchive.github.io/bitforge/metadata/` — MUST be the real
+  repo Pages URL at deploy. tokenURI = baseURI + rarity_serial + ".json".
+- Name/symbol set at deploy via env (no defaults). Symbol used in
+  tests/dry run: "BTFG" — CONFIRM with juragan before deploy.
+
+## Chain facts — VERIFIED 2026-11-10, not assumed (the Cinder lesson)
+- Robinhood Chain mainnet = chain ID 4663. RPC
+  `https://rpc.mainnet.chain.robinhood.com` answered `eth_chainId`
+  `0x1237` (= 4663) live.
+- Native gas token = ETH (18 decimals). Verified via QuickNode /
+  Chainstack / hood.dev docs. There is NO BNB, NO USDT, NO PancakeSwap
+  on this chain — the Cinder USDT-decimals bug class cannot occur here
+  (no payment token exists in this contract at all).
+- Sourcify SUPPORTS chain 4663 (verified: GET
+  /v2/contract/4663/<Veil addr> returns chainId "4663").
+- Orbit quirk: on Arbitrum Orbit chains block.number does NOT return the
+  L2 block height (it tracks the parent chain). This contract never uses
+  block.number for timing (mint window uses block.timestamp). blockhash()
+  is used ONLY as entropy mixed with minter + tokenId + drawNonce.
+- WETH on Robinhood Chain: 0x0bd7d308f8e1639fab988df18a8011f41eacad73
+  (not used by this contract — no ETH payments).
+
+## Verification (no gas spent, no real deploy)
+- `forge test`: **12/12 PASS** (team pre-mints + Legendary split,
+  free mint open to any wallet, 1/wallet, bad proof reverts, tier
+  boundaries, mint window, finalize time-lock, tokenURI, owner-only
+  powers, constructor guards).
+- Mainnet-fork dry run (`forge script --fork-url
+  https://rpc.mainnet.chain.robinhood.com`): **clean**. Guards printed
+  "Chain ID: 4663" + "Gas token: ETH". Simulated deploy:
+  BitForge 0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519 (FORK ARTIFACT —
+  NOT a real deploy), mintStart 1794301499, mintEnd 1794906299 (7d),
+  totalSupply 131, C85/R30/E13/L3. Estimated gas ~13,947,065,
+  ~0.00056 ETH.
+- Free-mint PoW nonce for tests computed offchain (ethers + SHA-256):
+  wallet 0x3001, seed 0x1111…1111, nonce 251724 (19 leading zero bits).
+
+## Open before deploy (needs juragan)
+1. Symbol: "BTFG" is the draft — confirm or change.
+2. Mint window: 7 days is the draft default — confirm or change.
+3. Repo + BASE_URI: repo `nftarchive/bitforge` EXISTS, Pages live at
+   `https://nftarchive.github.io/bitforge/`; BASE_URI is
+   `https://nftarchive.github.io/bitforge/metadata/` (set at deploy).
+4. Wallet addresses: treasury + 3–5 fresh personal wallets (deferred
+   by juragan — "wallet nanti aja").
+5. Deployer: needs ETH on Robinhood Chain for gas (~0.0006 ETH est.)
+   + key transiently at deploy.
+6. Deploy script REQUIRES env: PROJECT_NAME, PROJECT_SYMBOL, BASE_URI,
+   TREASURY, PERSONAL_WALLET_1/2/3 (+4/5 optional), PUZZLE_SEED
+   (bytes32(0) = random). It aborts unless chainid == 4663.
+
+## Files
+- `src/BitForge.sol` — the only contract.
+- `script/Deploy.s.sol` — deploy (Robinhood 4663, chain guard, no
+  external-token checks needed — there is no external token).
+- `test/BitForge.t.sol` — 12 tests.
+- `broadcast/Deploy.s.sol/4663/dry-run/` — fork dry-run record.
+- Art set: `~/workspace/bitforge-nft/` (3,131 images + metadata).
+- Base draft this was reworked from:
+  `~/workspace/cinder-concept/contracts-open/` (BSC, paid/token/pool
+  model — all of that was REMOVED here).
