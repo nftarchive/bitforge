@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Common #918",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/common_918.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 2
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "visor"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 918
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/common_918.html"
+}

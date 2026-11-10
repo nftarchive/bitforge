@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Common #473",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/common_473.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 2
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "visor"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 473
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/common_473.html"
+}

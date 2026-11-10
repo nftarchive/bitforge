@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Common #2022",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/common_2022.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 2
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "round"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "No"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 2022
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/common_2022.html"
+}

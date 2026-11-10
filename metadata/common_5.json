@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Common #5",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/common_5.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 2
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "visor"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 5
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/common_5.html"
+}
