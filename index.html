@@ -37,6 +37,7 @@
   /* hero robot */
   .hero { text-align:center; margin:4px 0 6px; }
   .heroRobot { margin:0 auto; cursor:pointer; }
+  .herohint { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .herocap { color:var(--muted); font-size:12px; margin-top:6px; }
   .herocap b { color:var(--gold); }
 
@@ -93,8 +94,9 @@
   <div class="termbody"><span class="p">$</span> <span class="cmd">git clone https://github.com/nftarchive/bitforge</span><br><span class="p">$</span> <span class="cmd">forge mint --free</span><br><span class="ok">&#10003;</span> <span class="gold">3,131 robots</span> forged from code<br><span class="ok">&#10003;</span> price <span class="gold">0.00 ETH</span> &mdash; gas only<br><span class="cmt"># first GitHub mint on Robinhood Chain</span> <span class="cursor"></span></div>
 
   <div class="hero">
+    <div class="herohint">tap the robot</div>
     <div class="heroRobot" id="heroRobot"></div>
-    <div class="herocap"><b><span class="rar-3">Legendary</span> #1</b> &mdash; tap the robot</div>
+    <div class="herocap"><b><span class="rar-3">Legendary</span></b> &middot; 6 colors</div>
   </div>
 
   <div class="strip">
@@ -611,14 +613,14 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
         }, 1600);
       });
     }
-    // hero: Legendary #1, tap to scatter
+    // hero: Legendary, tap to scatter
     var hero = $("heroRobot");
     if (hero && DATA.legendary_1) {
       buildRobot(hero, DATA.legendary_1, 20, 15);
       addScatter(hero, 220);
     }
     // strip: 4 robots kecil, semuanya bisa diketuk (scatter juga)
-    var strip = { common_1: "rCommon", rare_1: "rRare", epic_1: "rEpic" };
+    var strip = { common_2: "rCommon", rare_1: "rRare", epic_1: "rEpic" };
     Object.keys(strip).forEach(function (name) {
       var el = $(strip[name]);
       if (el && DATA[name]) { buildRobot(el, DATA[name], 7, 6); addScatter(el, 60); }
