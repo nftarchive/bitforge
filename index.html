@@ -592,32 +592,35 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
         el.appendChild(s);
       });
     }
+    // tap = scatter (sama kayak animasi NFT), balik utuh 1,6 dtk kemudian
+    function addScatter(el, maxDist) {
+      var scattered = false;
+      el.addEventListener("click", function () {
+        if (scattered) return;
+        var spans = el.querySelectorAll("span");
+        spans.forEach(function (s) {
+          s.style.transition = "transform .7s ease, opacity .7s ease";
+          s.style.transform = "translate(" + (Math.random() * maxDist - maxDist / 2) + "px," + (Math.random() * maxDist - maxDist / 2) + "px) rotate(" + (Math.random() * 360 - 180) + "deg)";
+          s.style.opacity = "0.25";
+        });
+        scattered = true;
+        setTimeout(function () {
+          spans.forEach(function (s) { s.style.transform = ""; s.style.opacity = ""; });
+          scattered = false;
+        }, 1600);
+      });
+    }
     // hero: Legendary #1, tap to scatter
     var hero = $("heroRobot");
     if (hero && DATA.legendary_1) {
       buildRobot(hero, DATA.legendary_1, 20, 15);
-      var scattered = false, timer = null;
-      hero.addEventListener("click", function () {
-        var spans = hero.querySelectorAll("span");
-        if (!scattered) {
-          spans.forEach(function (s) {
-            s.style.transition = "transform .7s ease, opacity .7s ease";
-            s.style.transform = "translate(" + (Math.random() * 220 - 110) + "px," + (Math.random() * 220 - 110) + "px) rotate(" + (Math.random() * 360 - 180) + "deg)";
-            s.style.opacity = "0.25";
-          });
-          scattered = true;
-          timer = setTimeout(function () {
-            spans.forEach(function (s) { s.style.transform = ""; s.style.opacity = ""; });
-            scattered = false;
-          }, 1600);
-        }
-      });
+      addScatter(hero, 220);
     }
-    // strip: 4 robots kecil
+    // strip: 4 robots kecil, semuanya bisa diketuk (scatter juga)
     var strip = { common_1: "rCommon", rare_1: "rRare", epic_1: "rEpic", common_2: "rCommon2" };
     Object.keys(strip).forEach(function (name) {
       var el = $(strip[name]);
-      if (el && DATA[name]) buildRobot(el, DATA[name], 7, 6);
+      if (el && DATA[name]) { buildRobot(el, DATA[name], 7, 6); addScatter(el, 60); }
     });
   })();
 
