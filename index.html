@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BitForge — Free Mint</title>
+<meta name="description" content="BitForge — 3,131 code robots. First GitHub mint on Robinhood Chain. Free mint.">
+<style>
+  :root { --bg:#111111; --panel:#1a1a1a; --gold:#F5C518; --cyan:#22D3EE; --purple:#A855F7; --red:#EF4444; --green:#22C55E; --text:#f5f5f5; --muted:#9a9a9a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; }
+  .wrap { max-width:640px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { color:var(--gold); font-size:34px; margin:8px 0 0; letter-spacing:1px; }
+  .sub { color:var(--muted); margin:6px 0 20px; }
+  .stats { display:flex; gap:12px; margin:0 0 20px; flex-wrap:wrap; }
+  .stat { background:var(--panel); border:1px solid #2a2a2a; border-radius:10px; padding:10px 14px; flex:1; min-width:140px; }
+  .stat b { display:block; font-size:22px; color:var(--gold); }
+  .stat span { color:var(--muted); font-size:12px; }
+  .step { background:var(--panel); border:1px solid #2a2a2a; border-radius:12px; padding:16px; margin:0 0 14px; }
+  .step h2 { margin:0 0 8px; font-size:16px; }
+  .step h2 .n { color:var(--gold); }
+  .step p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.5; }
+  button { background:var(--gold); color:#111; border:0; border-radius:8px; padding:11px 18px; font:inherit; font-weight:700; cursor:pointer; }
+  button:disabled { background:#3a3a3a; color:#777; cursor:not-allowed; }
+  button.ghost { background:transparent; color:var(--gold); border:1px solid var(--gold); }
+  .task { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid #262626; }
+  .task:first-of-type { border-top:0; }
+  .task input { width:18px; height:18px; margin-top:2px; accent-color:var(--gold); }
+  .task label { flex:1; font-size:14px; line-height:1.45; }
+  .task a { color:var(--cyan); }
+  .mono { font-size:13px; word-break:break-all; }
+  .ok { color:var(--green); } .warn { color:var(--red); } .mut { color:var(--muted); }
+  .bar { height:8px; background:#2a2a2a; border-radius:4px; overflow:hidden; margin:8px 0; }
+  .bar i { display:block; height:100%; background:var(--gold); width:0%; }
+  .robots { display:flex; gap:8px; margin:0 0 20px; }
+  .robots img { width:64px; height:64px; border-radius:10px; border:1px solid #2a2a2a; background:#000; }
+  .foot { color:var(--muted); font-size:12px; text-align:center; margin-top:28px; line-height:1.7; }
+  .foot a { color:var(--cyan); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BitForge</h1>
+  <p class="sub">3,131 code robots. First GitHub mint on Robinhood Chain. Free mint.</p>
+
+  <div class="robots" id="robots"></div>
+
+  <div class="stats">
+    <div class="stat"><b id="stMinted">–</b><span>minted / 3,131</span></div>
+    <div class="stat"><b id="stFree">–</b><span>free left</span></div>
+    <div class="stat"><b id="stTier">–</b><span>puzzle difficulty</span></div>
+  </div>
+
+  <div id="notDeployed" class="step hidden">
+    <h2><span class="n">!</span> Mint not open yet</h2>
+    <p>The contract is not deployed yet. Come back when the mint opens.</p>
+  </div>
+
+  <div class="step" id="step1">
+    <h2><span class="n">1.</span> Connect wallet</h2>
+    <p>Robinhood Chain (4663). Gas is paid in ETH. One free mint per wallet.</p>
+    <button id="btnConnect">Connect wallet</button>
+    <p class="mono" id="walletLine"></p>
+  </div>
+
+  <div class="step" id="step2">
+    <h2><span class="n">2.</span> X tasks</h2>
+    <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
+    <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
+    <div class="task"><input type="checkbox" id="t2"><label for="t2">Like + repost the launch post on <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a></label></div>
+    <div class="task"><input type="checkbox" id="t3"><label for="t3">Reply to the launch post with your wallet address (first 6 + last 4 is enough)</label></div>
+  </div>
+
+  <div class="step" id="step3">
+    <h2><span class="n">3.</span> Solve the puzzle</h2>
+    <p>Your browser solves it automatically — just wait. The puzzle proves you're not a bot.</p>
+    <button id="btnSolve" disabled>Solve puzzle</button>
+    <div class="bar"><i id="solveBar"></i></div>
+    <p class="mono" id="solveLine"><span class="mut">Locked — finish steps 1 and 2 first.</span></p>
+  </div>
+
+  <div class="step" id="step4">
+    <h2><span class="n">4.</span> Mint — free</h2>
+    <p>Price: 0. You only pay gas (ETH). Your robot's rarity is revealed instantly.</p>
+    <button id="btnMint" disabled>Mint free</button>
+    <p class="mono" id="mintLine"></p>
+    <p class="mono hidden" id="mintedBox"></p>
+  </div>
+
+  <p class="foot">
+    Contract: <span class="mono" id="contractLine">–</span><br>
+    <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> ·
+    <a href="https://github.com/nftarchive/bitforge" target="_blank" rel="noopener">GitHub</a> ·
+    <span id="osLink">Secondary market: OpenSea (after mint)</span>
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ================= CONFIG — set the real contract address after deploy =================
+  var CONFIG = {
+    CONTRACT: "0x0000000000000000000000000000000000000000", // TODO: BitForge address after deploy
+    CHAIN_ID: 4663,
+    CHAIN_HEX: "0x1237",
+    RPC: "https://rpc.mainnet.chain.robinhood.com",
+    EXPLORER: "https://robinhoodchain.blockscout.com",
+    BASE_URI: "https://nftarchive.github.io/bitforge/metadata/",
+    IMAGE_BASE: "https://nftarchive.github.io/bitforge/images/",
+    X_PROFILE: "https://x.com/BitForge_hq"
+  };
+
+  // Function selectors (verified against BitForge.sol with `cast sig`).
+  var SEL = {
+    seedFor: "0x8d3730fb",       // seedFor(address)
+    tierBits: "0x329a00ec",      // tierBits()
+    freeMinted: "0xd10a1a2b",    // freeMinted()
+    totalMinted: "0xa2309ff8",   // totalMinted()
+    freeMintedBy: "0xdd4d2233",  // freeMintedBy(address)
+    mintEnd: "0xea2b4ab2",       // mintEnd()
+    freeRemaining: "0x5a781a6b", // freeRemaining()
+    mintFree: "0xa4146733"       // mintFree(uint256)
+  };
+
+  var state = { wallet: null, seed: null, bits: 18, nonce: null, solving: false, stopSolve: false };
+
+  function $(id) { return document.getElementById(id); }
+  function hexPad32(n) { // uint256 -> 32-byte hex (no 0x)
+    var h = BigInt(n).toString(16);
+    return h.padStart(64, "0");
+  }
+  function addrPad(a) { return a.toLowerCase().replace(/^0x/, "").padStart(64, "0"); }
+  function toHex(bytes) {
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += bytes[i].toString(16).padStart(2, "0");
+    return s;
+  }
+  function leadingZeroBits(digest) {
+    var bits = 0;
+    for (var i = 0; i < digest.length; i++) {
+      var b = digest[i];
+      if (b === 0) { bits += 8; continue; }
+      for (var j = 7; j >= 0; j--) { if ((b >> j) & 1) return bits; bits++; }
+      return bits;
+    }
+    return bits;
+  }
+
+  // ---- reads via the public RPC (no wallet needed) ----
+  function rpcCall(data) {
+    return fetch(CONFIG.RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: CONFIG.CONTRACT, data: data }, "latest"] })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.error) throw new Error(j.error.message || "RPC error");
+      return j.result;
+    });
+  }
+  function rpcUint(data) {
+    return rpcCall(data).then(function (hex) { return BigInt(hex); });
+  }
+
+  function refreshStats() {
+    if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000") {
+      $("stMinted").textContent = "–";
+      $("stFree").textContent = "–";
+      $("stTier").textContent = "–";
+      return;
+    }
+    rpcUint(SEL.totalMinted).then(function (v) { $("stMinted").textContent = v.toString(); }).catch(function () {});
+    rpcUint(SEL.freeRemaining).then(function (v) { $("stFree").textContent = v.toString(); }).catch(function () {});
+    rpcUint(SEL.tierBits).then(function (v) {
+      state.bits = Number(v);
+      $("stTier").textContent = state.bits + " bits";
+    }).catch(function () {});
+  }
+
+  // ---- wallet ----
+  function hasWallet() { return typeof window.ethereum !== "undefined"; }
+
+  $("btnConnect").addEventListener("click", function () {
+    if (!hasWallet()) {
+      $("walletLine").innerHTML = '<span class="warn">No wallet found. Install MetaMask or another EVM wallet, then reload.</span>';
+      return;
+    }
+    window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accs) {
+      state.wallet = accs[0];
+      return window.ethereum.request({ method: "eth_chainId" }).then(function (cid) {
+        if (parseInt(cid, 16) !== CONFIG.CHAIN_ID) return switchChain();
+        return cid;
+      });
+    }).then(function () {
+      $("walletLine").innerHTML = 'Connected: <span class="ok">' + state.wallet + '</span> (Robinhood Chain)';
+      $("btnConnect").disabled = true;
+      $("btnConnect").textContent = "Connected";
+      checkUnlock();
+      // If this wallet already minted, say so.
+      if (CONFIG.CONTRACT !== "0x0000000000000000000000000000000000000000") {
+        rpcCall(SEL.freeMintedBy + addrPad(state.wallet)).then(function (hex) {
+          if (BigInt(hex) !== 0n) {
+            $("mintLine").innerHTML = '<span class="warn">This wallet already used its free mint.</span>';
+            $("btnMint").disabled = true;
+          }
+        }).catch(function () {});
+      }
+    }).catch(function (e) {
+      $("walletLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
+    });
+  });
+
+  function switchChain() {
+    return window.ethereum.request({
+      method: "wallet_switchEthereumChain", params: [{ chainId: CONFIG.CHAIN_HEX }]
+    }).catch(function (e) {
+      if (e && e.code === 4902) {
+        return window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: CONFIG.CHAIN_HEX, chainName: "Robinhood Chain",
+            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+            rpcUrls: [CONFIG.RPC], blockExplorerUrls: [CONFIG.EXPLORER]
+          }]
+        });
+      }
+      throw e;
+    });
+  }
+
+  // ---- X tasks (honor system) ----
+  ["t1", "t2", "t3"].forEach(function (id) {
+    $(id).addEventListener("change", checkUnlock);
+  });
+  function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
+  function checkUnlock() {
+    var ready = !!state.wallet && tasksDone();
+    $("btnSolve").disabled = !ready || state.nonce !== null;
+    $("solveLine").innerHTML = ready
+      ? (state.nonce !== null ? '<span class="ok">Puzzle solved.</span>' : "Ready — press Solve puzzle.")
+      : '<span class="mut">Locked — finish steps 1 and 2 first.</span>';
+    if (ready && state.nonce !== null) $("btnMint").disabled = false;
+  }
+
+  // ---- PoW solver (SHA-256, matches BitForge.sol exactly) ----
+  // preimage = SHA-256( hex(seed) + ":" + decimal(nonce) ), hex(seed) is 64 lowercase chars, no 0x.
+  $("btnSolve").addEventListener("click", function () {
+    if (state.solving || !state.wallet) return;
+    if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000") {
+      $("solveLine").innerHTML = '<span class="warn">Contract not deployed yet.</span>';
+      return;
+    }
+    state.solving = true;
+    $("btnSolve").disabled = true;
+    $("solveLine").textContent = "Reading your puzzle seed…";
+    rpcCall(SEL.seedFor + addrPad(state.wallet)).then(function (seedHex) {
+      state.seed = seedHex.replace(/^0x/, "");
+      return rpcUint(SEL.tierBits);
+    }).then(function (bits) {
+      state.bits = Number(bits);
+      $("stTier").textContent = state.bits + " bits";
+      $("solveLine").textContent = "Solving… difficulty " + state.bits + " bits. Keep this tab open.";
+      return solveLoop(0);
+    }).then(function (found) {
+      state.solving = false;
+      if (found === null) { $("solveLine").textContent = "Stopped."; $("btnSolve").disabled = false; return; }
+      state.nonce = found;
+      $("solveLine").innerHTML = '<span class="ok">Solved! Nonce: ' + found + "</span>";
+      $("btnMint").disabled = false;
+      checkUnlock();
+    }).catch(function (e) {
+      state.solving = false;
+      $("btnSolve").disabled = false;
+      $("solveLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
+    });
+  });
+
+  function solveLoop(startNonce) {
+    var BATCH = 4000; // hashes per chunk, keeps the tab responsive
+    var nonce = startNonce;
+    var enc = new TextEncoder();
+    function chunk() {
+      var jobs = [];
+      for (var i = 0; i < BATCH; i++) {
+        jobs.push(crypto.subtle.digest("SHA-256", enc.encode(state.seed + ":" + (nonce + i))));
+      }
+      return Promise.all(jobs).then(function (digests) {
+        for (var i = 0; i < digests.length; i++) {
+          if (leadingZeroBits(new Uint8Array(digests[i])) >= state.bits) return nonce + i;
+        }
+        nonce += BATCH;
+        // progress bar is illustrative (expected tries ≈ 2^bits)
+        var tried = nonce;
+        var pct = Math.min(99, Math.round(100 * (1 - Math.pow(0.5, tried / Math.pow(2, state.bits)))));
+        $("solveBar").style.width = pct + "%";
+        $("solveLine").textContent = "Solving… " + tried.toLocaleString() + " tries, difficulty " + state.bits + " bits.";
+        return new Promise(function (res) { setTimeout(function () { res(chunk()); }, 0); });
+      });
+    }
+    return chunk();
+  }
+
+  // ---- mint ----
+  $("btnMint").addEventListener("click", function () {
+    if (!state.wallet || state.nonce === null) return;
+    $("btnMint").disabled = true;
+    $("mintLine").textContent = "Waiting for your wallet to confirm…";
+    var data = SEL.mintFree + hexPad32(state.nonce);
+    window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{ from: state.wallet, to: CONFIG.CONTRACT, value: "0x0", data: data }]
+    }).then(function (txHash) {
+      $("mintLine").innerHTML = 'Sent: <a href="' + CONFIG.EXPLORER + "/tx/" + txHash + '" target="_blank" rel="noopener">' + txHash + "</a> — wait for confirmation…";
+      return waitTx(txHash);
+    }).then(function (ok) {
+      if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; $("btnMint").disabled = false; return; }
+      $("mintLine").innerHTML = '<span class="ok">Minted! Check your wallet.</span>';
+      $("mintedBox").classList.remove("hidden");
+      $("mintedBox").innerHTML = 'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
+      refreshStats();
+    }).catch(function (e) {
+      $("btnMint").disabled = false;
+      $("mintLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
+    });
+  });
+
+  function waitTx(txHash) {
+    return fetch(CONFIG.RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "eth_getTransactionReceipt", params: [txHash] })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.result) return j.result.status === "0x1";
+      return new Promise(function (res) { setTimeout(function () { waitTx(txHash).then(res); }, 2000); });
+    }).catch(function () {
+      return new Promise(function (res) { setTimeout(function () { waitTx(txHash).then(res); }, 2000); });
+    });
+  }
+
+  // ---- sample robots (first 5 images) ----
+  (function () {
+    var box = $("robots");
+    ["common_1", "rare_1", "epic_1", "legendary_1", "common_2"].forEach(function (n) {
+      var img = document.createElement("img");
+      img.src = CONFIG.IMAGE_BASE + n + ".png";
+      img.alt = n;
+      img.onerror = function () { img.style.display = "none"; };
+      box.appendChild(img);
+    });
+  })();
+
+  // ---- init ----
+  $("contractLine").textContent = CONFIG.CONTRACT;
+  if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000") {
+    $("notDeployed").classList.remove("hidden");
+  } else {
+    $("osLink").innerHTML = 'Secondary market: <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a>';
+  }
+  refreshStats();
+  setInterval(refreshStats, 30000);
+})();
+</script>
+</body>
+</html>
