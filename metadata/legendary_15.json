@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Legendary #15",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/legendary_15.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Legendary"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 6
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "round"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "No"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 15
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/legendary_15.html"
+}

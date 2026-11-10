@@ -1,0 +1,28 @@
+{
+  "name": "BitForge Rare #297",
+  "description": "A code robot forged from {code}. First GitHub mint on Robinhood Chain. Free mint \u2014 3,131 total.",
+  "image": "https://nftarchive.github.io/bitforge/images/rare_297.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "Colors",
+      "value": 3
+    },
+    {
+      "trait_type": "Eye style",
+      "value": "visor"
+    },
+    {
+      "trait_type": "Antenna",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Serial",
+      "value": 297
+    }
+  ],
+  "animation_url": "https://nftarchive.github.io/bitforge/anim/rare_297.html"
+}
