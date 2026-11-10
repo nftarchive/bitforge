@@ -6,51 +6,104 @@
 <title>BitForge — Free Mint</title>
 <meta name="description" content="BitForge — 3,131 code robots. First GitHub mint on Robinhood Chain. Free mint.">
 <style>
-  :root { --bg:#111111; --panel:#1a1a1a; --gold:#F5C518; --cyan:#22D3EE; --purple:#A855F7; --red:#EF4444; --green:#22C55E; --text:#f5f5f5; --muted:#9a9a9a; }
+  :root { --bg:#0d1117; --panel:#161b22; --panel2:#0d1117; --border:#30363d; --gold:#F5C518; --green:#3fb950; --cyan:#22D3EE; --purple:#A855F7; --red:#EF4444; --text:#e6edf3; --muted:#8b949e; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; }
-  .wrap { max-width:640px; margin:0 auto; padding:24px 16px 64px; }
-  h1 { color:var(--gold); font-size:34px; margin:8px 0 0; letter-spacing:1px; }
-  .sub { color:var(--muted); margin:6px 0 20px; }
-  .stats { display:flex; gap:12px; margin:0 0 20px; flex-wrap:wrap; }
-  .stat { background:var(--panel); border:1px solid #2a2a2a; border-radius:10px; padding:10px 14px; flex:1; min-width:140px; }
-  .stat b { display:block; font-size:22px; color:var(--gold); }
-  .stat span { color:var(--muted); font-size:12px; }
-  .step { background:var(--panel); border:1px solid #2a2a2a; border-radius:12px; padding:16px; margin:0 0 14px; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px 16px 64px; }
+  a { color:var(--cyan); text-decoration:none; }
+
+  /* repo header ala GitHub */
+  .repohead { border-bottom:1px solid var(--border); padding:10px 0 12px; margin-bottom:16px; }
+  .repohead .path { font-size:18px; }
+  .repohead .path .owner { color:var(--cyan); }
+  .repohead .path .slash { color:var(--muted); }
+  .repohead .path .repo { color:var(--gold); font-weight:700; }
+  .badge { display:inline-block; font-size:11px; color:var(--muted); border:1px solid var(--border); border-radius:20px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .repometa { color:var(--muted); font-size:12px; margin-top:6px; }
+  .repometa b { color:var(--text); }
+
+  /* terminal: tanpa kotak, teks rata di background */
+  .term { margin:0 0 16px; }
+  .termbody { padding:0; font-size:13px; line-height:1.75; }
+  .termbody .p { color:var(--green); }
+  .termbody .cmd { color:var(--text); }
+  .termbody .ok { color:var(--green); }
+  .termbody .gold { color:var(--gold); }
+  .termbody .cmt { color:var(--muted); }
+  .cursor { display:inline-block; width:8px; height:15px; background:var(--gold); vertical-align:-2px; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+
+  /* hero robot */
+  .hero { text-align:center; margin:4px 0 6px; }
+  .heroRobot { margin:0 auto; cursor:pointer; }
+  .herocap { color:var(--muted); font-size:12px; margin-top:6px; }
+  .herocap b { color:var(--gold); }
+
+  /* strip robot kecil */
+  .strip { display:flex; gap:10px; justify-content:center; margin:14px 0 18px; flex-wrap:wrap; }
+  .mini { text-align:center; }
+  .mini .lbl { font-size:11px; color:var(--muted); margin-top:4px; }
+  .mini .lbl b { color:var(--text); }
+
+  /* file tree: tanpa kotak, teks rata */
+  .tree { padding:0; font-size:13px; line-height:1.8; margin:0 0 18px; overflow-x:auto; white-space:nowrap; }
+  .tree .dir { color:var(--gold); }
+  .tree .file { color:var(--text); }
+  .tree .cnt { color:var(--muted); }
+  .tree .br { color:var(--muted); }
+
+  h1 { color:var(--gold); font-size:30px; margin:6px 0 0; letter-spacing:1px; }
+  .sub { color:var(--muted); margin:6px 0 18px; font-size:13px; }
+  .statsline { color:var(--muted); font-size:13px; margin:0 0 18px; line-height:1.8; }
+  .statsline b { color:var(--gold); font-size:16px; }
+  .step { background:transparent; border:0; border-top:1px dashed var(--border); border-radius:0; padding:18px 0; margin:0; }
   .step h2 { margin:0 0 8px; font-size:16px; }
   .step h2 .n { color:var(--gold); }
   .step p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.5; }
-  button { background:var(--gold); color:#111; border:0; border-radius:8px; padding:11px 18px; font:inherit; font-weight:700; cursor:pointer; }
-  button:disabled { background:#3a3a3a; color:#777; cursor:not-allowed; }
-  button.ghost { background:transparent; color:var(--gold); border:1px solid var(--gold); }
+  button { background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:0; padding:11px 18px; font:inherit; font-weight:700; cursor:pointer; }
+  button:disabled { background:transparent; border-color:#333; color:#666; cursor:not-allowed; }
   .task { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid #262626; }
   .task:first-of-type { border-top:0; }
   .task input { width:18px; height:18px; margin-top:2px; accent-color:var(--gold); }
   .task label { flex:1; font-size:14px; line-height:1.45; }
-  .task a { color:var(--cyan); }
+  .taskout { font-size:13px; line-height:1.65; padding:2px 0 8px 28px; }
+  .taskout:empty { display:none; }
   .mono { font-size:13px; word-break:break-all; }
   .ok { color:var(--green); } .warn { color:var(--red); } .mut { color:var(--muted); }
   .bar { height:8px; background:#2a2a2a; border-radius:4px; overflow:hidden; margin:8px 0; }
   .bar i { display:block; height:100%; background:var(--gold); width:0%; }
-  .robots { display:flex; gap:8px; margin:0 0 20px; }
-  .robots img { width:64px; height:64px; border-radius:10px; border:1px solid #2a2a2a; background:#000; }
   .foot { color:var(--muted); font-size:12px; text-align:center; margin-top:28px; line-height:1.7; }
-  .foot a { color:var(--cyan); }
   .hidden { display:none; }
 </style>
 </head>
 <body>
 <div class="wrap">
+
+  <div class="repohead">
+    <div class="path"><span class="owner">nftarchive</span><span class="slash"> / </span><span class="repo">bitforge</span><span class="badge">Public</span></div>
+    <div class="repometa"><b>3,131</b> code robots &middot; <b>free</b> mint &middot; Robinhood Chain <span id="repoStars"></span></div>
+  </div>
+
+  <div class="termbody"><span class="p">$</span> <span class="cmd">git clone https://github.com/nftarchive/bitforge</span><br><span class="p">$</span> <span class="cmd">forge mint --free</span><br><span class="ok">&#10003;</span> <span class="gold">3,131 robots</span> forged from code<br><span class="ok">&#10003;</span> price <span class="gold">0.00 ETH</span> &mdash; gas only<br><span class="cmt"># first GitHub mint on Robinhood Chain</span> <span class="cursor"></span></div>
+
+  <div class="hero">
+    <div class="heroRobot" id="heroRobot"></div>
+    <div class="herocap"><b>Legendary #1</b> &mdash; tap the robot</div>
+  </div>
+
+  <div class="strip">
+    <div class="mini"><div id="rCommon"></div><div class="lbl"><b>Common #1</b> &middot; 2 colors</div></div>
+    <div class="mini"><div id="rRare"></div><div class="lbl"><b>Rare #1</b> &middot; 3 colors</div></div>
+    <div class="mini"><div id="rEpic"></div><div class="lbl"><b>Epic #1</b> &middot; 4 colors</div></div>
+    <div class="mini"><div id="rCommon2"></div><div class="lbl"><b>Common #2</b> &middot; 2 colors</div></div>
+  </div>
+
+  <div class="tree"><span class="br">bitforge/</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">contracts/</span><br><span class="br">&brvbar;&nbsp;&nbsp; &boxur;&mdash;&mdash;</span> <span class="file">BitForge.sol</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">images/</span> <span class="cnt">3,131 files</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">metadata/</span> <span class="cnt">3,131 files</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">anim/</span> <span class="cnt">3,131 files</span><br><span class="br">&boxur;&mdash;&mdash;</span> <span class="file">index.html</span></div>
+
   <h1>BitForge</h1>
   <p class="sub">3,131 code robots. First GitHub mint on Robinhood Chain. Free mint.</p>
 
-  <div class="robots" id="robots"></div>
-
-  <div class="stats">
-    <div class="stat"><b id="stMinted">–</b><span>minted / 3,131</span></div>
-    <div class="stat"><b id="stFree">–</b><span>free left</span></div>
-    <div class="stat"><b id="stTier">–</b><span>puzzle difficulty</span></div>
-  </div>
+  <p class="statsline">minted: <b id="stMinted">&ndash;</b> / 3,131 &nbsp;&middot;&nbsp; free left: <b id="stFree">&ndash;</b> &nbsp;&middot;&nbsp; difficulty: <b id="stTier">&ndash;</b></p>
 
   <div id="notDeployed" class="step hidden">
     <h2><span class="n">!</span> Mint not open yet</h2>
@@ -58,44 +111,55 @@
   </div>
 
   <div class="step" id="step1">
-    <h2><span class="n">1.</span> Connect wallet</h2>
+    <h2><span class="n">$ 1.</span> Connect wallet</h2>
     <p>Robinhood Chain (4663). Gas is paid in ETH. One free mint per wallet.</p>
-    <button id="btnConnect">Connect wallet</button>
+    <button id="btnConnect">[ Connect wallet ]</button>
     <p class="mono" id="walletLine"></p>
   </div>
 
   <div class="step" id="step2">
-    <h2><span class="n">2.</span> X tasks</h2>
+    <h2><span class="n">$ 2.</span> X tasks</h2>
     <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
     <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
-    <div class="task"><input type="checkbox" id="t2"><label for="t2">Like + repost the launch post on <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a></label></div>
-    <div class="task"><input type="checkbox" id="t3"><label for="t3">Reply to the launch post with your wallet address (first 6 + last 4 is enough)</label></div>
+    <div class="taskout mono" id="out-t1"></div>
+    <div class="task"><input type="checkbox" id="t2"><label for="t2">Like + repost the launch post on <a id="launchLink2" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a></label></div>
+    <div class="taskout mono" id="out-t2"></div>
+    <div class="task"><input type="checkbox" id="t3"><label for="t3">Reply to <a id="launchLink3" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">the launch post</a> with your wallet address (first 6 + last 4 is enough)</label></div>
+    <div class="taskout mono" id="out-t3"></div>
   </div>
 
   <div class="step" id="step3">
-    <h2><span class="n">3.</span> Solve the puzzle</h2>
-    <p>Your browser solves it automatically — just wait. The puzzle proves you're not a bot.</p>
-    <button id="btnSolve" disabled>Solve puzzle</button>
-    <div class="bar"><i id="solveBar"></i></div>
-    <p class="mono" id="solveLine"><span class="mut">Locked — finish steps 1 and 2 first.</span></p>
+    <h2><span class="n">$ 3.</span> Solve the puzzle</h2>
+    <p>Your browser solves it automatically &mdash; just wait. The puzzle proves you&rsquo;re not a bot.</p>
+    <button id="btnSolve" disabled>[ Solve puzzle ]</button>
+    <p class="mono mut" id="solveBar"></p>
+    <p class="mono" id="solveLine"><span class="mut">Locked &mdash; finish steps 1 and 2 first.</span></p>
   </div>
 
   <div class="step" id="step4">
-    <h2><span class="n">4.</span> Mint — free</h2>
-    <p>Price: 0. You only pay gas (ETH). Your robot's rarity is revealed instantly.</p>
-    <button id="btnMint" disabled>Mint free</button>
+    <h2><span class="n">$ 4.</span> Mint &mdash; free</h2>
+    <p>Price: 0. You only pay gas (ETH). Your robot&rsquo;s rarity is revealed instantly.</p>
+    <button id="btnMint" disabled>[ Mint free ]</button>
     <p class="mono" id="mintLine"></p>
     <p class="mono hidden" id="mintedBox"></p>
   </div>
 
+  <div class="step" id="sessTerm">
+    <h2><span class="n">#</span> output</h2>
+    <div class="termbody" id="sessLog"><span class="cmt"># session log &mdash; every step prints here</span></div>
+  </div>
+
   <p class="foot">
-    Contract: <span class="mono" id="contractLine">–</span><br>
-    <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> ·
-    <a href="https://github.com/nftarchive/bitforge" target="_blank" rel="noopener">GitHub</a> ·
+    Contract: <span class="mono" id="contractLine">&ndash;</span><br>
+    <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> &middot;
+    <a href="https://github.com/nftarchive/bitforge" target="_blank" rel="noopener">GitHub</a> &middot;
     <span id="osLink">Secondary market: OpenSea (after mint)</span>
   </p>
 </div>
 
+<script>
+window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 2, "r": 11, "ch": "<", "color": "#A855F7"}, {"c": 2, "r": 12, "ch": ">", "color": "#22D3EE"}, {"c": 3, "r": 10, "ch": "=", "color": "#F5C518"}, {"c": 3, "r": 11, "ch": "}", "color": "#22D3EE"}, {"c": 3, "r": 12, "ch": "0", "color": "#FFFFFF"}, {"c": 4, "r": 2, "ch": "{", "color": "#FAF8F5"}, {"c": 4, "r": 3, "ch": "/", "color": "#FAF8F5"}, {"c": 4, "r": 4, "ch": "#", "color": "#FAF8F5"}, {"c": 4, "r": 5, "ch": ";", "color": "#FAF8F5"}, {"c": 4, "r": 6, "ch": "}", "color": "#FAF8F5"}, {"c": 4, "r": 7, "ch": "*", "color": "#FAF8F5"}, {"c": 4, "r": 9, "ch": "}", "color": "#FFFFFF"}, {"c": 4, "r": 10, "ch": ">", "color": "#FFFFFF"}, {"c": 4, "r": 11, "ch": "+", "color": "#A855F7"}, {"c": 4, "r": 12, "ch": "=", "color": "#A855F7"}, {"c": 4, "r": 13, "ch": "0", "color": "#A855F7"}, {"c": 5, "r": 2, "ch": "<", "color": "#FAF8F5"}, {"c": 5, "r": 3, "ch": "}", "color": "#FAF8F5"}, {"c": 5, "r": 4, "ch": "X", "color": "#EF4444"}, {"c": 5, "r": 5, "ch": "X", "color": "#EF4444"}, {"c": 5, "r": 6, "ch": "/", "color": "#FAF8F5"}, {"c": 5, "r": 7, "ch": "}", "color": "#FAF8F5"}, {"c": 5, "r": 9, "ch": "{", "color": "#FFFFFF"}, {"c": 5, "r": 10, "ch": "+", "color": "#EF4444"}, {"c": 5, "r": 11, "ch": ">", "color": "#A855F7"}, {"c": 5, "r": 12, "ch": "#", "color": "#EF4444"}, {"c": 5, "r": 13, "ch": ";", "color": "#FFFFFF"}, {"c": 5, "r": 14, "ch": "}", "color": "#EF4444"}, {"c": 5, "r": 15, "ch": "/", "color": "#22C55E"}, {"c": 6, "r": 2, "ch": "0", "color": "#FAF8F5"}, {"c": 6, "r": 3, "ch": "1", "color": "#FAF8F5"}, {"c": 6, "r": 4, "ch": "X", "color": "#EF4444"}, {"c": 6, "r": 5, "ch": "X", "color": "#EF4444"}, {"c": 6, "r": 6, "ch": "{", "color": "#FAF8F5"}, {"c": 6, "r": 7, "ch": "+", "color": "#FAF8F5"}, {"c": 6, "r": 9, "ch": "0", "color": "#22C55E"}, {"c": 6, "r": 10, "ch": "+", "color": "#22D3EE"}, {"c": 6, "r": 11, "ch": "#", "color": "#22D3EE"}, {"c": 6, "r": 12, "ch": ";", "color": "#FFFFFF"}, {"c": 6, "r": 13, "ch": "{", "color": "#22C55E"}, {"c": 6, "r": 14, "ch": "}", "color": "#22D3EE"}, {"c": 6, "r": 15, "ch": "0", "color": "#22D3EE"}, {"c": 7, "r": 0, "ch": ";", "color": "#FFFFFF"}, {"c": 7, "r": 1, "ch": ">", "color": "#A855F7"}, {"c": 7, "r": 2, "ch": "<", "color": "#FAF8F5"}, {"c": 7, "r": 3, "ch": "*", "color": "#FAF8F5"}, {"c": 7, "r": 4, "ch": "1", "color": "#FAF8F5"}, {"c": 7, "r": 5, "ch": ">", "color": "#FAF8F5"}, {"c": 7, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": "}", "color": "#FAF8F5"}, {"c": 7, "r": 8, "ch": "1", "color": "#EF4444"}, {"c": 7, "r": 9, "ch": "+", "color": "#F5C518"}, {"c": 7, "r": 10, "ch": "+", "color": "#A855F7"}, {"c": 7, "r": 11, "ch": "/", "color": "#22D3EE"}, {"c": 7, "r": 12, "ch": ";", "color": "#A855F7"}, {"c": 7, "r": 13, "ch": ";", "color": "#EF4444"}, {"c": 8, "r": 0, "ch": "+", "color": "#FFFFFF"}, {"c": 8, "r": 1, "ch": "*", "color": "#A855F7"}, {"c": 8, "r": 2, "ch": "0", "color": "#FAF8F5"}, {"c": 8, "r": 3, "ch": "{", "color": "#FAF8F5"}, {"c": 8, "r": 4, "ch": "0", "color": "#FAF8F5"}, {"c": 8, "r": 5, "ch": "1", "color": "#FAF8F5"}, {"c": 8, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": ";", "color": "#FAF8F5"}, {"c": 8, "r": 8, "ch": "*", "color": "#F5C518"}, {"c": 8, "r": 9, "ch": "*", "color": "#A855F7"}, {"c": 8, "r": 10, "ch": ">", "color": "#22D3EE"}, {"c": 8, "r": 11, "ch": "}", "color": "#A855F7"}, {"c": 8, "r": 12, "ch": "}", "color": "#FFFFFF"}, {"c": 8, "r": 13, "ch": "=", "color": "#A855F7"}, {"c": 9, "r": 2, "ch": "+", "color": "#FAF8F5"}, {"c": 9, "r": 3, "ch": "=", "color": "#FAF8F5"}, {"c": 9, "r": 4, "ch": "0", "color": "#22C55E"}, {"c": 9, "r": 5, "ch": "0", "color": "#22C55E"}, {"c": 9, "r": 6, "ch": "=", "color": "#FAF8F5"}, {"c": 9, "r": 7, "ch": ">", "color": "#FAF8F5"}, {"c": 9, "r": 9, "ch": "{", "color": "#EF4444"}, {"c": 9, "r": 10, "ch": ">", "color": "#22C55E"}, {"c": 9, "r": 11, "ch": "*", "color": "#EF4444"}, {"c": 9, "r": 12, "ch": "{", "color": "#F5C518"}, {"c": 9, "r": 13, "ch": "+", "color": "#EF4444"}, {"c": 9, "r": 14, "ch": "<", "color": "#A855F7"}, {"c": 9, "r": 15, "ch": "}", "color": "#FFFFFF"}, {"c": 10, "r": 2, "ch": ";", "color": "#FAF8F5"}, {"c": 10, "r": 3, "ch": "/", "color": "#FAF8F5"}, {"c": 10, "r": 4, "ch": "0", "color": "#22C55E"}, {"c": 10, "r": 5, "ch": "0", "color": "#22C55E"}, {"c": 10, "r": 6, "ch": "+", "color": "#FAF8F5"}, {"c": 10, "r": 7, "ch": "0", "color": "#FAF8F5"}, {"c": 10, "r": 9, "ch": "+", "color": "#EF4444"}, {"c": 10, "r": 10, "ch": "{", "color": "#A855F7"}, {"c": 10, "r": 11, "ch": "{", "color": "#F5C518"}, {"c": 10, "r": 12, "ch": "<", "color": "#F5C518"}, {"c": 10, "r": 13, "ch": ";", "color": "#22D3EE"}, {"c": 10, "r": 14, "ch": "{", "color": "#22D3EE"}, {"c": 10, "r": 15, "ch": "<", "color": "#FFFFFF"}, {"c": 11, "r": 2, "ch": "0", "color": "#FAF8F5"}, {"c": 11, "r": 3, "ch": "*", "color": "#FAF8F5"}, {"c": 11, "r": 4, "ch": "#", "color": "#FAF8F5"}, {"c": 11, "r": 5, "ch": "=", "color": "#FAF8F5"}, {"c": 11, "r": 6, "ch": "{", "color": "#FAF8F5"}, {"c": 11, "r": 7, "ch": "}", "color": "#FAF8F5"}, {"c": 11, "r": 9, "ch": "#", "color": "#22D3EE"}, {"c": 11, "r": 10, "ch": ">", "color": "#EF4444"}, {"c": 11, "r": 11, "ch": "1", "color": "#EF4444"}, {"c": 11, "r": 12, "ch": "<", "color": "#A855F7"}, {"c": 11, "r": 13, "ch": "{", "color": "#F5C518"}, {"c": 12, "r": 10, "ch": "1", "color": "#FFFFFF"}, {"c": 12, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 12, "r": 12, "ch": "*", "color": "#EF4444"}, {"c": 13, "r": 10, "ch": "*", "color": "#22D3EE"}, {"c": 13, "r": 11, "ch": "0", "color": "#FFFFFF"}, {"c": 13, "r": 12, "ch": "<", "color": "#EF4444"}], "common_1": [{"c": 2, "r": 10, "ch": ">", "color": "#F5C518"}, {"c": 2, "r": 11, "ch": ";", "color": "#D97706"}, {"c": 2, "r": 12, "ch": "0", "color": "#D97706"}, {"c": 3, "r": 10, "ch": "+", "color": "#D97706"}, {"c": 3, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 3, "r": 12, "ch": ";", "color": "#F5C518"}, {"c": 4, "r": 2, "ch": "}", "color": "#F5C518"}, {"c": 4, "r": 3, "ch": "/", "color": "#F5C518"}, {"c": 4, "r": 4, "ch": "=", "color": "#F5C518"}, {"c": 4, "r": 5, "ch": "1", "color": "#D97706"}, {"c": 4, "r": 6, "ch": "0", "color": "#D97706"}, {"c": 4, "r": 7, "ch": "#", "color": "#D97706"}, {"c": 4, "r": 9, "ch": "<", "color": "#D97706"}, {"c": 4, "r": 10, "ch": ">", "color": "#D97706"}, {"c": 4, "r": 11, "ch": "{", "color": "#F5C518"}, {"c": 4, "r": 12, "ch": "/", "color": "#F5C518"}, {"c": 4, "r": 13, "ch": "1", "color": "#D97706"}, {"c": 5, "r": 2, "ch": "#", "color": "#D97706"}, {"c": 5, "r": 3, "ch": "=", "color": "#F5C518"}, {"c": 5, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 6, "ch": "/", "color": "#F5C518"}, {"c": 5, "r": 7, "ch": "0", "color": "#D97706"}, {"c": 5, "r": 9, "ch": "{", "color": "#D97706"}, {"c": 5, "r": 10, "ch": ";", "color": "#D97706"}, {"c": 5, "r": 11, "ch": ">", "color": "#D97706"}, {"c": 5, "r": 12, "ch": "*", "color": "#D97706"}, {"c": 5, "r": 13, "ch": "0", "color": "#D97706"}, {"c": 5, "r": 14, "ch": "}", "color": "#F5C518"}, {"c": 5, "r": 15, "ch": "0", "color": "#D97706"}, {"c": 6, "r": 2, "ch": "}", "color": "#D97706"}, {"c": 6, "r": 3, "ch": "<", "color": "#F5C518"}, {"c": 6, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 6, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 6, "r": 6, "ch": "0", "color": "#F5C518"}, {"c": 6, "r": 7, "ch": "#", "color": "#D97706"}, {"c": 6, "r": 9, "ch": "}", "color": "#F5C518"}, {"c": 6, "r": 10, "ch": "{", "color": "#D97706"}, {"c": 6, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 6, "r": 12, "ch": "=", "color": "#D97706"}, {"c": 6, "r": 13, "ch": ";", "color": "#F5C518"}, {"c": 6, "r": 14, "ch": "}", "color": "#D97706"}, {"c": 6, "r": 15, "ch": ">", "color": "#D97706"}, {"c": 7, "r": 2, "ch": "{", "color": "#F5C518"}, {"c": 7, "r": 3, "ch": "{", "color": "#F5C518"}, {"c": 7, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": "1", "color": "#F5C518"}, {"c": 7, "r": 8, "ch": "=", "color": "#F5C518"}, {"c": 7, "r": 9, "ch": "{", "color": "#F5C518"}, {"c": 7, "r": 10, "ch": "<", "color": "#F5C518"}, {"c": 7, "r": 11, "ch": "<", "color": "#F5C518"}, {"c": 7, "r": 12, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 13, "ch": "}", "color": "#F5C518"}, {"c": 8, "r": 2, "ch": "0", "color": "#D97706"}, {"c": 8, "r": 3, "ch": "<", "color": "#D97706"}, {"c": 8, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": "1", "color": "#D97706"}, {"c": 8, "r": 8, "ch": ">", "color": "#F5C518"}, {"c": 8, "r": 9, "ch": "=", "color": "#D97706"}, {"c": 8, "r": 10, "ch": "1", "color": "#D97706"}, {"c": 8, "r": 11, "ch": "#", "color": "#F5C518"}, {"c": 8, "r": 12, "ch": "1", "color": "#D97706"}, {"c": 8, "r": 13, "ch": ">", "color": "#D97706"}, {"c": 9, "r": 2, "ch": "}", "color": "#D97706"}, {"c": 9, "r": 3, "ch": "0", "color": "#F5C518"}, {"c": 9, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 6, "ch": "/", "color": "#D97706"}, {"c": 9, "r": 7, "ch": "*", "color": "#D97706"}, {"c": 9, "r": 9, "ch": "}", "color": "#D97706"}, {"c": 9, "r": 10, "ch": "0", "color": "#D97706"}, {"c": 9, "r": 11, "ch": "=", "color": "#D97706"}, {"c": 9, "r": 12, "ch": ";", "color": "#D97706"}, {"c": 9, "r": 13, "ch": "<", "color": "#F5C518"}, {"c": 9, "r": 14, "ch": ">", "color": "#D97706"}, {"c": 9, "r": 15, "ch": ">", "color": "#F5C518"}, {"c": 10, "r": 2, "ch": "1", "color": "#F5C518"}, {"c": 10, "r": 3, "ch": "1", "color": "#F5C518"}, {"c": 10, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 10, "r": 6, "ch": "#", "color": "#F5C518"}, {"c": 10, "r": 7, "ch": "#", "color": "#F5C518"}, {"c": 10, "r": 9, "ch": "+", "color": "#F5C518"}, {"c": 10, "r": 10, "ch": "{", "color": "#D97706"}, {"c": 10, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 10, "r": 12, "ch": "1", "color": "#F5C518"}, {"c": 10, "r": 13, "ch": "=", "color": "#D97706"}, {"c": 10, "r": 14, "ch": "#", "color": "#F5C518"}, {"c": 10, "r": 15, "ch": "*", "color": "#F5C518"}, {"c": 11, "r": 2, "ch": "0", "color": "#F5C518"}, {"c": 11, "r": 3, "ch": "=", "color": "#D97706"}, {"c": 11, "r": 4, "ch": "+", "color": "#D97706"}, {"c": 11, "r": 5, "ch": "=", "color": "#D97706"}, {"c": 11, "r": 6, "ch": "#", "color": "#D97706"}, {"c": 11, "r": 7, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 9, "ch": "<", "color": "#F5C518"}, {"c": 11, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 11, "r": 11, "ch": "#", "color": "#F5C518"}, {"c": 11, "r": 12, "ch": "*", "color": "#D97706"}, {"c": 11, "r": 13, "ch": "=", "color": "#D97706"}, {"c": 12, "r": 10, "ch": "+", "color": "#F5C518"}, {"c": 12, "r": 11, "ch": "0", "color": "#F5C518"}, {"c": 12, "r": 12, "ch": "+", "color": "#D97706"}, {"c": 13, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 13, "r": 11, "ch": "#", "color": "#F5C518"}, {"c": 13, "r": 12, "ch": ">", "color": "#F5C518"}], "rare_1": [{"c": 2, "r": 10, "ch": "+", "color": "#22D3EE"}, {"c": 2, "r": 11, "ch": "*", "color": "#FFFFFF"}, {"c": 2, "r": 12, "ch": "/", "color": "#22D3EE"}, {"c": 3, "r": 10, "ch": "#", "color": "#F5C518"}, {"c": 3, "r": 11, "ch": "<", "color": "#F5C518"}, {"c": 3, "r": 12, "ch": "0", "color": "#FFFFFF"}, {"c": 4, "r": 2, "ch": "1", "color": "#FFFFFF"}, {"c": 4, "r": 3, "ch": "}", "color": "#22D3EE"}, {"c": 4, "r": 4, "ch": "#", "color": "#F5C518"}, {"c": 4, "r": 5, "ch": "1", "color": "#F5C518"}, {"c": 4, "r": 6, "ch": "{", "color": "#22D3EE"}, {"c": 4, "r": 7, "ch": "{", "color": "#FFFFFF"}, {"c": 4, "r": 9, "ch": "0", "color": "#FFFFFF"}, {"c": 4, "r": 10, "ch": "<", "color": "#FFFFFF"}, {"c": 4, "r": 11, "ch": "{", "color": "#22D3EE"}, {"c": 4, "r": 12, "ch": "<", "color": "#F5C518"}, {"c": 4, "r": 13, "ch": "/", "color": "#FFFFFF"}, {"c": 5, "r": 2, "ch": "0", "color": "#F5C518"}, {"c": 5, "r": 3, "ch": "/", "color": "#F5C518"}, {"c": 5, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 5, "r": 6, "ch": "<", "color": "#FFFFFF"}, {"c": 5, "r": 7, "ch": "}", "color": "#FFFFFF"}, {"c": 5, "r": 9, "ch": "<", "color": "#F5C518"}, {"c": 5, "r": 10, "ch": "=", "color": "#F5C518"}, {"c": 5, "r": 11, "ch": "0", "color": "#F5C518"}, {"c": 5, "r": 12, "ch": "}", "color": "#22D3EE"}, {"c": 5, "r": 13, "ch": "=", "color": "#22D3EE"}, {"c": 5, "r": 14, "ch": "/", "color": "#22D3EE"}, {"c": 5, "r": 15, "ch": "{", "color": "#22D3EE"}, {"c": 6, "r": 2, "ch": "#", "color": "#22D3EE"}, {"c": 6, "r": 3, "ch": "=", "color": "#F5C518"}, {"c": 6, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 6, "r": 7, "ch": "}", "color": "#22D3EE"}, {"c": 6, "r": 9, "ch": "#", "color": "#22D3EE"}, {"c": 6, "r": 10, "ch": "*", "color": "#FFFFFF"}, {"c": 6, "r": 11, "ch": "=", "color": "#FFFFFF"}, {"c": 6, "r": 12, "ch": "}", "color": "#22D3EE"}, {"c": 6, "r": 13, "ch": "*", "color": "#FFFFFF"}, {"c": 6, "r": 14, "ch": "/", "color": "#FFFFFF"}, {"c": 6, "r": 15, "ch": ">", "color": "#22D3EE"}, {"c": 7, "r": 0, "ch": "<", "color": "#22D3EE"}, {"c": 7, "r": 1, "ch": "*", "color": "#22D3EE"}, {"c": 7, "r": 2, "ch": "*", "color": "#F5C518"}, {"c": 7, "r": 3, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 4, "ch": "0", "color": "#22D3EE"}, {"c": 7, "r": 5, "ch": "+", "color": "#F5C518"}, {"c": 7, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": "*", "color": "#F5C518"}, {"c": 7, "r": 8, "ch": "}", "color": "#22D3EE"}, {"c": 7, "r": 9, "ch": "=", "color": "#F5C518"}, {"c": 7, "r": 10, "ch": "/", "color": "#F5C518"}, {"c": 7, "r": 11, "ch": "}", "color": "#22D3EE"}, {"c": 7, "r": 12, "ch": ">", "color": "#F5C518"}, {"c": 7, "r": 13, "ch": ";", "color": "#22D3EE"}, {"c": 8, "r": 0, "ch": "{", "color": "#F5C518"}, {"c": 8, "r": 1, "ch": "/", "color": "#F5C518"}, {"c": 8, "r": 2, "ch": ";", "color": "#22D3EE"}, {"c": 8, "r": 3, "ch": "+", "color": "#FFFFFF"}, {"c": 8, "r": 4, "ch": "0", "color": "#22D3EE"}, {"c": 8, "r": 5, "ch": ">", "color": "#22D3EE"}, {"c": 8, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 8, "ch": "1", "color": "#FFFFFF"}, {"c": 8, "r": 9, "ch": "*", "color": "#22D3EE"}, {"c": 8, "r": 10, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 11, "ch": "*", "color": "#F5C518"}, {"c": 8, "r": 12, "ch": "*", "color": "#F5C518"}, {"c": 8, "r": 13, "ch": "<", "color": "#F5C518"}, {"c": 9, "r": 2, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 3, "ch": "+", "color": "#FFFFFF"}, {"c": 9, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 6, "ch": "{", "color": "#22D3EE"}, {"c": 9, "r": 7, "ch": "/", "color": "#FFFFFF"}, {"c": 9, "r": 9, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 10, "ch": ";", "color": "#FFFFFF"}, {"c": 9, "r": 11, "ch": "{", "color": "#22D3EE"}, {"c": 9, "r": 12, "ch": ">", "color": "#F5C518"}, {"c": 9, "r": 13, "ch": "*", "color": "#22D3EE"}, {"c": 9, "r": 14, "ch": "#", "color": "#F5C518"}, {"c": 9, "r": 15, "ch": "/", "color": "#22D3EE"}, {"c": 10, "r": 2, "ch": ">", "color": "#FFFFFF"}, {"c": 10, "r": 3, "ch": ">", "color": "#FFFFFF"}, {"c": 10, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 10, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 6, "ch": "/", "color": "#22D3EE"}, {"c": 10, "r": 7, "ch": "<", "color": "#22D3EE"}, {"c": 10, "r": 9, "ch": "=", "color": "#F5C518"}, {"c": 10, "r": 10, "ch": "=", "color": "#F5C518"}, {"c": 10, "r": 11, "ch": "*", "color": "#22D3EE"}, {"c": 10, "r": 12, "ch": "=", "color": "#FFFFFF"}, {"c": 10, "r": 13, "ch": "+", "color": "#FFFFFF"}, {"c": 10, "r": 14, "ch": "+", "color": "#F5C518"}, {"c": 10, "r": 15, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 2, "ch": "1", "color": "#FFFFFF"}, {"c": 11, "r": 3, "ch": "/", "color": "#22D3EE"}, {"c": 11, "r": 4, "ch": "<", "color": "#F5C518"}, {"c": 11, "r": 5, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 6, "ch": "/", "color": "#22D3EE"}, {"c": 11, "r": 7, "ch": "<", "color": "#FFFFFF"}, {"c": 11, "r": 9, "ch": "/", "color": "#22D3EE"}, {"c": 11, "r": 10, "ch": "#", "color": "#FFFFFF"}, {"c": 11, "r": 11, "ch": "0", "color": "#F5C518"}, {"c": 11, "r": 12, "ch": ";", "color": "#FFFFFF"}, {"c": 11, "r": 13, "ch": "}", "color": "#FFFFFF"}, {"c": 12, "r": 10, "ch": "=", "color": "#22D3EE"}, {"c": 12, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 12, "r": 12, "ch": "*", "color": "#F5C518"}, {"c": 13, "r": 10, "ch": "}", "color": "#22D3EE"}, {"c": 13, "r": 11, "ch": "1", "color": "#F5C518"}, {"c": 13, "r": 12, "ch": "=", "color": "#FFFFFF"}], "epic_1": [{"c": 2, "r": 10, "ch": "<", "color": "#22D3EE"}, {"c": 2, "r": 11, "ch": "}", "color": "#22D3EE"}, {"c": 2, "r": 12, "ch": "/", "color": "#FFFFFF"}, {"c": 3, "r": 10, "ch": ">", "color": "#F5C518"}, {"c": 3, "r": 11, "ch": "/", "color": "#22D3EE"}, {"c": 3, "r": 12, "ch": "{", "color": "#22D3EE"}, {"c": 4, "r": 2, "ch": "=", "color": "#FFFFFF"}, {"c": 4, "r": 3, "ch": ";", "color": "#F5C518"}, {"c": 4, "r": 4, "ch": "=", "color": "#22D3EE"}, {"c": 4, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 4, "r": 6, "ch": "*", "color": "#FFFFFF"}, {"c": 4, "r": 7, "ch": "#", "color": "#22D3EE"}, {"c": 4, "r": 9, "ch": ">", "color": "#F5C518"}, {"c": 4, "r": 10, "ch": "/", "color": "#22D3EE"}, {"c": 4, "r": 11, "ch": ">", "color": "#FFFFFF"}, {"c": 4, "r": 12, "ch": "0", "color": "#22D3EE"}, {"c": 4, "r": 13, "ch": "0", "color": "#A855F7"}, {"c": 5, "r": 2, "ch": "*", "color": "#22D3EE"}, {"c": 5, "r": 3, "ch": "/", "color": "#FFFFFF"}, {"c": 5, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 6, "ch": "{", "color": "#FFFFFF"}, {"c": 5, "r": 7, "ch": "1", "color": "#FFFFFF"}, {"c": 5, "r": 9, "ch": "1", "color": "#FFFFFF"}, {"c": 5, "r": 10, "ch": "+", "color": "#FFFFFF"}, {"c": 5, "r": 11, "ch": "#", "color": "#F5C518"}, {"c": 5, "r": 12, "ch": "0", "color": "#A855F7"}, {"c": 5, "r": 13, "ch": ";", "color": "#22D3EE"}, {"c": 5, "r": 14, "ch": ">", "color": "#F5C518"}, {"c": 5, "r": 15, "ch": "<", "color": "#A855F7"}, {"c": 6, "r": 2, "ch": "1", "color": "#FFFFFF"}, {"c": 6, "r": 3, "ch": ";", "color": "#FFFFFF"}, {"c": 6, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 6, "ch": "#", "color": "#A855F7"}, {"c": 6, "r": 7, "ch": "=", "color": "#F5C518"}, {"c": 6, "r": 9, "ch": "1", "color": "#FFFFFF"}, {"c": 6, "r": 10, "ch": "<", "color": "#FFFFFF"}, {"c": 6, "r": 11, "ch": "+", "color": "#A855F7"}, {"c": 6, "r": 12, "ch": "=", "color": "#FFFFFF"}, {"c": 6, "r": 13, "ch": "/", "color": "#F5C518"}, {"c": 6, "r": 14, "ch": "1", "color": "#22D3EE"}, {"c": 6, "r": 15, "ch": "{", "color": "#22D3EE"}, {"c": 7, "r": 0, "ch": "{", "color": "#A855F7"}, {"c": 7, "r": 1, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 2, "ch": ";", "color": "#A855F7"}, {"c": 7, "r": 3, "ch": "+", "color": "#22D3EE"}, {"c": 7, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": "1", "color": "#FFFFFF"}, {"c": 7, "r": 8, "ch": "/", "color": "#FFFFFF"}, {"c": 7, "r": 9, "ch": ">", "color": "#22D3EE"}, {"c": 7, "r": 10, "ch": "+", "color": "#A855F7"}, {"c": 7, "r": 11, "ch": ";", "color": "#A855F7"}, {"c": 7, "r": 12, "ch": "#", "color": "#A855F7"}, {"c": 7, "r": 13, "ch": "{", "color": "#FFFFFF"}, {"c": 8, "r": 0, "ch": "1", "color": "#F5C518"}, {"c": 8, "r": 1, "ch": "=", "color": "#A855F7"}, {"c": 8, "r": 2, "ch": ">", "color": "#FFFFFF"}, {"c": 8, "r": 3, "ch": "#", "color": "#F5C518"}, {"c": 8, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": ">", "color": "#FFFFFF"}, {"c": 8, "r": 8, "ch": "#", "color": "#A855F7"}, {"c": 8, "r": 9, "ch": "{", "color": "#22D3EE"}, {"c": 8, "r": 10, "ch": "+", "color": "#22D3EE"}, {"c": 8, "r": 11, "ch": "}", "color": "#F5C518"}, {"c": 8, "r": 12, "ch": "*", "color": "#22D3EE"}, {"c": 8, "r": 13, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 2, "ch": "=", "color": "#FFFFFF"}, {"c": 9, "r": 3, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 6, "ch": "*", "color": "#22D3EE"}, {"c": 9, "r": 7, "ch": "{", "color": "#A855F7"}, {"c": 9, "r": 9, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 10, "ch": "*", "color": "#F5C518"}, {"c": 9, "r": 11, "ch": "{", "color": "#A855F7"}, {"c": 9, "r": 12, "ch": "+", "color": "#FFFFFF"}, {"c": 9, "r": 13, "ch": "}", "color": "#A855F7"}, {"c": 9, "r": 14, "ch": "*", "color": "#F5C518"}, {"c": 9, "r": 15, "ch": "#", "color": "#A855F7"}, {"c": 10, "r": 2, "ch": "<", "color": "#22D3EE"}, {"c": 10, "r": 3, "ch": ">", "color": "#22D3EE"}, {"c": 10, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 10, "r": 6, "ch": "1", "color": "#A855F7"}, {"c": 10, "r": 7, "ch": ">", "color": "#22D3EE"}, {"c": 10, "r": 9, "ch": "}", "color": "#FFFFFF"}, {"c": 10, "r": 10, "ch": "{", "color": "#A855F7"}, {"c": 10, "r": 11, "ch": "<", "color": "#22D3EE"}, {"c": 10, "r": 12, "ch": "/", "color": "#A855F7"}, {"c": 10, "r": 13, "ch": "=", "color": "#F5C518"}, {"c": 10, "r": 14, "ch": "/", "color": "#F5C518"}, {"c": 10, "r": 15, "ch": "#", "color": "#FFFFFF"}, {"c": 11, "r": 2, "ch": "/", "color": "#A855F7"}, {"c": 11, "r": 3, "ch": ">", "color": "#F5C518"}, {"c": 11, "r": 4, "ch": "+", "color": "#FFFFFF"}, {"c": 11, "r": 5, "ch": "1", "color": "#FFFFFF"}, {"c": 11, "r": 6, "ch": "{", "color": "#A855F7"}, {"c": 11, "r": 7, "ch": ">", "color": "#A855F7"}, {"c": 11, "r": 9, "ch": "+", "color": "#A855F7"}, {"c": 11, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 11, "r": 11, "ch": "0", "color": "#FFFFFF"}, {"c": 11, "r": 12, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 13, "ch": "*", "color": "#A855F7"}, {"c": 12, "r": 10, "ch": "1", "color": "#FFFFFF"}, {"c": 12, "r": 11, "ch": "#", "color": "#A855F7"}, {"c": 12, "r": 12, "ch": ">", "color": "#A855F7"}, {"c": 13, "r": 10, "ch": ">", "color": "#F5C518"}, {"c": 13, "r": 11, "ch": "/", "color": "#22D3EE"}, {"c": 13, "r": 12, "ch": "{", "color": "#22D3EE"}], "common_2": [{"c": 2, "r": 10, "ch": "#", "color": "#F5C518"}, {"c": 2, "r": 11, "ch": "#", "color": "#D97706"}, {"c": 2, "r": 12, "ch": ">", "color": "#F5C518"}, {"c": 3, "r": 10, "ch": "/", "color": "#F5C518"}, {"c": 3, "r": 11, "ch": "+", "color": "#F5C518"}, {"c": 3, "r": 12, "ch": "=", "color": "#F5C518"}, {"c": 4, "r": 2, "ch": "<", "color": "#D97706"}, {"c": 4, "r": 3, "ch": "=", "color": "#F5C518"}, {"c": 4, "r": 4, "ch": ">", "color": "#F5C518"}, {"c": 4, "r": 5, "ch": "/", "color": "#F5C518"}, {"c": 4, "r": 6, "ch": "*", "color": "#F5C518"}, {"c": 4, "r": 7, "ch": "+", "color": "#F5C518"}, {"c": 4, "r": 9, "ch": ";", "color": "#F5C518"}, {"c": 4, "r": 10, "ch": "{", "color": "#D97706"}, {"c": 4, "r": 11, "ch": "1", "color": "#F5C518"}, {"c": 4, "r": 12, "ch": "}", "color": "#F5C518"}, {"c": 4, "r": 13, "ch": "}", "color": "#F5C518"}, {"c": 5, "r": 2, "ch": "}", "color": "#F5C518"}, {"c": 5, "r": 3, "ch": "1", "color": "#F5C518"}, {"c": 5, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 5, "r": 6, "ch": "{", "color": "#F5C518"}, {"c": 5, "r": 7, "ch": "1", "color": "#D97706"}, {"c": 5, "r": 9, "ch": "+", "color": "#D97706"}, {"c": 5, "r": 10, "ch": "<", "color": "#D97706"}, {"c": 5, "r": 11, "ch": "#", "color": "#F5C518"}, {"c": 5, "r": 12, "ch": "=", "color": "#D97706"}, {"c": 5, "r": 13, "ch": "{", "color": "#D97706"}, {"c": 5, "r": 14, "ch": "1", "color": "#F5C518"}, {"c": 5, "r": 15, "ch": "0", "color": "#F5C518"}, {"c": 6, "r": 2, "ch": "1", "color": "#D97706"}, {"c": 6, "r": 3, "ch": "}", "color": "#F5C518"}, {"c": 6, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 6, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 6, "ch": ">", "color": "#D97706"}, {"c": 6, "r": 7, "ch": "1", "color": "#D97706"}, {"c": 6, "r": 9, "ch": "#", "color": "#F5C518"}, {"c": 6, "r": 10, "ch": "1", "color": "#D97706"}, {"c": 6, "r": 11, "ch": ">", "color": "#D97706"}, {"c": 6, "r": 12, "ch": "0", "color": "#D97706"}, {"c": 6, "r": 13, "ch": "0", "color": "#D97706"}, {"c": 6, "r": 14, "ch": "#", "color": "#D97706"}, {"c": 6, "r": 15, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 0, "ch": "#", "color": "#D97706"}, {"c": 7, "r": 1, "ch": ";", "color": "#D97706"}, {"c": 7, "r": 2, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 3, "ch": "/", "color": "#D97706"}, {"c": 7, "r": 4, "ch": "}", "color": "#D97706"}, {"c": 7, "r": 5, "ch": "<", "color": "#F5C518"}, {"c": 7, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 8, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 9, "ch": "=", "color": "#D97706"}, {"c": 7, "r": 10, "ch": "/", "color": "#F5C518"}, {"c": 7, "r": 11, "ch": "+", "color": "#F5C518"}, {"c": 7, "r": 12, "ch": "<", "color": "#F5C518"}, {"c": 7, "r": 13, "ch": "+", "color": "#F5C518"}, {"c": 8, "r": 0, "ch": "/", "color": "#D97706"}, {"c": 8, "r": 1, "ch": "1", "color": "#F5C518"}, {"c": 8, "r": 2, "ch": ";", "color": "#F5C518"}, {"c": 8, "r": 3, "ch": "{", "color": "#D97706"}, {"c": 8, "r": 4, "ch": "/", "color": "#F5C518"}, {"c": 8, "r": 5, "ch": "/", "color": "#F5C518"}, {"c": 8, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": "+", "color": "#F5C518"}, {"c": 8, "r": 8, "ch": "1", "color": "#D97706"}, {"c": 8, "r": 9, "ch": "1", "color": "#D97706"}, {"c": 8, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 8, "r": 11, "ch": "*", "color": "#F5C518"}, {"c": 8, "r": 12, "ch": "0", "color": "#D97706"}, {"c": 8, "r": 13, "ch": "1", "color": "#D97706"}, {"c": 9, "r": 2, "ch": "{", "color": "#D97706"}, {"c": 9, "r": 3, "ch": "=", "color": "#D97706"}, {"c": 9, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 5, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 6, "ch": "+", "color": "#F5C518"}, {"c": 9, "r": 7, "ch": "<", "color": "#F5C518"}, {"c": 9, "r": 9, "ch": ">", "color": "#D97706"}, {"c": 9, "r": 10, "ch": ">", "color": "#D97706"}, {"c": 9, "r": 11, "ch": "=", "color": "#F5C518"}, {"c": 9, "r": 12, "ch": "*", "color": "#D97706"}, {"c": 9, "r": 13, "ch": "#", "color": "#D97706"}, {"c": 9, "r": 14, "ch": "#", "color": "#F5C518"}, {"c": 9, "r": 15, "ch": "=", "color": "#D97706"}, {"c": 10, "r": 2, "ch": "<", "color": "#F5C518"}, {"c": 10, "r": 3, "ch": "}", "color": "#F5C518"}, {"c": 10, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 10, "r": 5, "ch": "#", "color": "#FFFFFF"}, {"c": 10, "r": 6, "ch": "=", "color": "#D97706"}, {"c": 10, "r": 7, "ch": "0", "color": "#F5C518"}, {"c": 10, "r": 9, "ch": ";", "color": "#D97706"}, {"c": 10, "r": 10, "ch": "1", "color": "#D97706"}, {"c": 10, "r": 11, "ch": ">", "color": "#F5C518"}, {"c": 10, "r": 12, "ch": "#", "color": "#F5C518"}, {"c": 10, "r": 13, "ch": "0", "color": "#D97706"}, {"c": 10, "r": 14, "ch": "0", "color": "#F5C518"}, {"c": 10, "r": 15, "ch": ">", "color": "#F5C518"}, {"c": 11, "r": 2, "ch": "+", "color": "#F5C518"}, {"c": 11, "r": 3, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 4, "ch": "+", "color": "#D97706"}, {"c": 11, "r": 5, "ch": "=", "color": "#D97706"}, {"c": 11, "r": 6, "ch": ";", "color": "#F5C518"}, {"c": 11, "r": 7, "ch": "0", "color": "#D97706"}, {"c": 11, "r": 9, "ch": "{", "color": "#D97706"}, {"c": 11, "r": 10, "ch": "}", "color": "#D97706"}, {"c": 11, "r": 11, "ch": "1", "color": "#D97706"}, {"c": 11, "r": 12, "ch": ">", "color": "#D97706"}, {"c": 11, "r": 13, "ch": "}", "color": "#D97706"}, {"c": 12, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 12, "r": 11, "ch": "/", "color": "#F5C518"}, {"c": 12, "r": 12, "ch": "{", "color": "#D97706"}, {"c": 13, "r": 10, "ch": "=", "color": "#F5C518"}, {"c": 13, "r": 11, "ch": "=", "color": "#D97706"}, {"c": 13, "r": 12, "ch": "}", "color": "#D97706"}]};
+</script>
 <script>
 (function () {
   "use strict";
@@ -109,7 +173,8 @@
     EXPLORER: "https://robinhoodchain.blockscout.com",
     BASE_URI: "https://nftarchive.github.io/bitforge/metadata/",
     IMAGE_BASE: "https://nftarchive.github.io/bitforge/images/",
-    X_PROFILE: "https://x.com/BitForge_hq"
+    X_PROFILE: "https://x.com/BitForge_hq",
+    LAUNCH_POST: "" // TODO: isi URL postingan launch asli begitu diposting, mis. "https://x.com/BitForge_hq/status/123..."
   };
 
   // Function selectors (verified against BitForge.sol with `cast sig`).
@@ -127,6 +192,16 @@
   var state = { wallet: null, seed: null, bits: 18, nonce: null, solving: false, stopSolve: false };
 
   function $(id) { return document.getElementById(id); }
+  function shortAddr(a) { return a.slice(0, 6) + "&hellip;" + a.slice(-4); }
+  function tlog(html) { // tulis 1 baris ke terminal log sesi
+    var log = $("sessLog");
+    if (!log) return;
+    var d = document.createElement("div");
+    d.innerHTML = html;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+  function okLine(txt) { return '<span class="ok">&#10003; ' + txt + "</span>"; }
   function hexPad32(n) { // uint256 -> 32-byte hex (no 0x)
     var h = BigInt(n).toString(16);
     return h.padStart(64, "0");
@@ -193,9 +268,11 @@
         return cid;
       });
     }).then(function () {
-      $("walletLine").innerHTML = 'Connected: <span class="ok">' + state.wallet + '</span> (Robinhood Chain)';
+      $("walletLine").innerHTML = '$ connect wallet<br>' + okLine("connected: " + shortAddr(state.wallet) + " (Robinhood Chain)");
+      tlog("$ connect wallet");
+      tlog(okLine("connected: " + shortAddr(state.wallet) + " (Robinhood Chain)"));
       $("btnConnect").disabled = true;
-      $("btnConnect").textContent = "Connected";
+      $("btnConnect").textContent = "[ Connected ]";
       checkUnlock();
       // If this wallet already minted, say so.
       if (CONFIG.CONTRACT !== "0x0000000000000000000000000000000000000000") {
@@ -230,8 +307,22 @@
   }
 
   // ---- X tasks (honor system) ----
+  var TASK_CMD = { t1: "follow @BitForge_hq", t2: "like + repost launch post", t3: "reply to launch post" };
   ["t1", "t2", "t3"].forEach(function (id) {
-    $(id).addEventListener("change", checkUnlock);
+    $(id).addEventListener("change", function () {
+      var out = $("out-" + id);
+      if ($(id).checked) {
+        out.innerHTML = "&gt; $ " + TASK_CMD[id] + "<br>&gt; " + okLine("done");
+        tlog("$ " + TASK_CMD[id]);
+        tlog(okLine("done"));
+        if (tasksDone()) {
+          tlog(okLine("all X tasks done"));
+        }
+      } else {
+        out.innerHTML = "";
+      }
+      checkUnlock();
+    });
   });
   function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
   function checkUnlock() {
@@ -253,7 +344,8 @@
     }
     state.solving = true;
     $("btnSolve").disabled = true;
-    $("solveLine").textContent = "Reading your puzzle seed…";
+    $("solveLine").innerHTML = "$ solve puzzle";
+    tlog("$ solve puzzle");
     rpcCall(SEL.seedFor + addrPad(state.wallet)).then(function (seedHex) {
       state.seed = seedHex.replace(/^0x/, "");
       return rpcUint(SEL.tierBits);
@@ -261,12 +353,14 @@
       state.bits = Number(bits);
       $("stTier").textContent = state.bits + " bits";
       $("solveLine").textContent = "Solving… difficulty " + state.bits + " bits. Keep this tab open.";
+      tlog("solving… difficulty " + state.bits + " bits");
       return solveLoop(0);
     }).then(function (found) {
       state.solving = false;
       if (found === null) { $("solveLine").textContent = "Stopped."; $("btnSolve").disabled = false; return; }
       state.nonce = found;
-      $("solveLine").innerHTML = '<span class="ok">Solved! Nonce: ' + found + "</span>";
+      $("solveLine").innerHTML = okLine("solved! nonce: " + found);
+      tlog(okLine("solved! nonce: " + found));
       $("btnMint").disabled = false;
       checkUnlock();
     }).catch(function (e) {
@@ -293,7 +387,8 @@
         // progress bar is illustrative (expected tries ≈ 2^bits)
         var tried = nonce;
         var pct = Math.min(99, Math.round(100 * (1 - Math.pow(0.5, tried / Math.pow(2, state.bits)))));
-        $("solveBar").style.width = pct + "%";
+        var filled = Math.round(pct / 10);
+        $("solveBar").textContent = "[" + "\u2588".repeat(filled) + "\u2591".repeat(10 - filled) + "] " + pct + "%";
         $("solveLine").textContent = "Solving… " + tried.toLocaleString() + " tries, difficulty " + state.bits + " bits.";
         return new Promise(function (res) { setTimeout(function () { res(chunk()); }, 0); });
       });
@@ -305,17 +400,20 @@
   $("btnMint").addEventListener("click", function () {
     if (!state.wallet || state.nonce === null) return;
     $("btnMint").disabled = true;
-    $("mintLine").textContent = "Waiting for your wallet to confirm…";
+    $("mintLine").innerHTML = "$ mint --free";
+    tlog("$ mint --free");
     var data = SEL.mintFree + hexPad32(state.nonce);
     window.ethereum.request({
       method: "eth_sendTransaction",
       params: [{ from: state.wallet, to: CONFIG.CONTRACT, value: "0x0", data: data }]
     }).then(function (txHash) {
-      $("mintLine").innerHTML = 'Sent: <a href="' + CONFIG.EXPLORER + "/tx/" + txHash + '" target="_blank" rel="noopener">' + txHash + "</a> — wait for confirmation…";
+      $("mintLine").innerHTML = 'tx: <a href="' + CONFIG.EXPLORER + "/tx/" + txHash + '" target="_blank" rel="noopener">' + txHash + "</a>";
+      tlog("tx sent: " + txHash);
       return waitTx(txHash);
     }).then(function (ok) {
-      if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; $("btnMint").disabled = false; return; }
-      $("mintLine").innerHTML = '<span class="ok">Minted! Check your wallet.</span>';
+      if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; tlog('<span class="warn">failed</span>'); $("btnMint").disabled = false; return; }
+      $("mintLine").innerHTML = okLine("minted! check your wallet.");
+      tlog(okLine("minted!"));
       $("mintedBox").classList.remove("hidden");
       $("mintedBox").innerHTML = 'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
       refreshStats();
@@ -338,19 +436,58 @@
     });
   }
 
-  // ---- sample robots (first 5 images) ----
+  // ---- robots rendered inline as code (no images needed) ----
   (function () {
-    var box = $("robots");
-    ["common_1", "rare_1", "epic_1", "legendary_1", "common_2"].forEach(function (n) {
-      var img = document.createElement("img");
-      img.src = CONFIG.IMAGE_BASE + n + ".png";
-      img.alt = n;
-      img.onerror = function () { img.style.display = "none"; };
-      box.appendChild(img);
+    var DATA = window.ROBOTS || {};
+    function buildRobot(el, cells, cellPx, fontPx) {
+      el.style.position = "relative";
+      el.style.width = (16 * cellPx) + "px";
+      el.style.height = (16 * cellPx) + "px";
+      cells.forEach(function (c) {
+        var s = document.createElement("span");
+        s.textContent = c.ch;
+        s.style.cssText = "position:absolute;left:" + (c.c * cellPx) + "px;top:" + (c.r * cellPx) +
+          "px;width:" + cellPx + "px;height:" + cellPx + "px;line-height:" + cellPx + "px;" +
+          "text-align:center;font-size:" + fontPx + "px;color:" + c.color + ";";
+        el.appendChild(s);
+      });
+    }
+    // hero: Legendary #1, tap to scatter
+    var hero = $("heroRobot");
+    if (hero && DATA.legendary_1) {
+      buildRobot(hero, DATA.legendary_1, 20, 15);
+      var scattered = false, timer = null;
+      hero.addEventListener("click", function () {
+        var spans = hero.querySelectorAll("span");
+        if (!scattered) {
+          spans.forEach(function (s) {
+            s.style.transition = "transform .7s ease, opacity .7s ease";
+            s.style.transform = "translate(" + (Math.random() * 220 - 110) + "px," + (Math.random() * 220 - 110) + "px) rotate(" + (Math.random() * 360 - 180) + "deg)";
+            s.style.opacity = "0.25";
+          });
+          scattered = true;
+          timer = setTimeout(function () {
+            spans.forEach(function (s) { s.style.transform = ""; s.style.opacity = ""; });
+            scattered = false;
+          }, 1600);
+        }
+      });
+    }
+    // strip: 4 robots kecil
+    var strip = { common_1: "rCommon", rare_1: "rRare", epic_1: "rEpic", common_2: "rCommon2" };
+    Object.keys(strip).forEach(function (name) {
+      var el = $(strip[name]);
+      if (el && DATA[name]) buildRobot(el, DATA[name], 7, 6);
     });
   })();
 
   // ---- init ----
+  if (CONFIG.LAUNCH_POST) {
+    ["launchLink2", "launchLink3"].forEach(function (id) {
+      var a = $(id);
+      if (a) a.href = CONFIG.LAUNCH_POST;
+    });
+  }
   $("contractLine").textContent = CONFIG.CONTRACT;
   if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000") {
     $("notDeployed").classList.remove("hidden");
@@ -360,6 +497,14 @@
   refreshStats();
   setInterval(refreshStats, 30000);
 })();
+</script>
+<script>
+  // repo stars (real, from GitHub API; silent if it fails)
+  fetch("https://api.github.com/repos/nftarchive/bitforge").then(function (r) { return r.json(); }).then(function (d) {
+    if (d && typeof d.stargazers_count === "number") {
+      document.getElementById("repoStars").textContent = "· ★ " + d.stargazers_count + " stars";
+    }
+  }).catch(function () {});
 </script>
 </body>
 </html>
