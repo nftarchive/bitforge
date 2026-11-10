@@ -271,10 +271,10 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
         var r = Number(vals[0]), serial = Number(vals[1]);
         $("mintedBox").classList.remove("hidden");
         $("mintedBox").innerHTML =
-          'BitForge <span class="' + RCLS[r] + '">' + RAR[r] + '</span> #' + id + '<br>' +
-          '<span class="' + RCLS[r] + '">' + RAR[r] + ' ' + serial + '/' + RMAX[r] + '</span><br>' +
+          'BitForge #' + id + '<br>' +
+          '<span class="' + RCLS[r] + '">' + serial + '/' + RMAX[r] + '</span><br>' +
           'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
-        tlog('minted: BitForge ' + RAR[r] + ' #' + id + ' (' + RAR[r] + ' ' + serial + '/' + RMAX[r] + ')');
+        tlog('minted: BitForge #' + id + ' (' + serial + '/' + RMAX[r] + ')');
       });
     }).catch(function () {
       $("mintedBox").classList.remove("hidden");
