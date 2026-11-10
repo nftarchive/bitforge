@@ -72,5 +72,11 @@ contract DeployBitForge is Script {
         console.log("rareMinted:", nft.rareMinted());
         console.log("epicMinted:", nft.epicMinted());
         console.log("legendaryMinted:", nft.legendaryMinted());
+        console.log("ROYALTY: 5% (500 bps) to treasury, ERC-2981, locked (no setter)");
+        console.log("NOTE: operator allowlist starts EMPTY. Add OpenSea Seaport via");
+        console.log("setOperatorAllowed(seaport, true) BEFORE trading opens, or no");
+        console.log("marketplace sale can execute. Seaport address on Robinhood");
+        console.log("Chain 4663 must be verified onchain first (NOT the canonical");
+        console.log("Ethereum address - check it has code via eth_getCode).");
     }
 }

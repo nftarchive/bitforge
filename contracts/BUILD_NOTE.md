@@ -22,6 +22,18 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
 - Owner powers ONLY: finalize() (time-locked, closes mint, no payouts —
   all free) + rotatePuzzle() (emergency). No pause, no setPrice, no
   setBaseURI, no upgrade, no withdraw.
+- CREATOR FEE 5% ENFORCED (decided 2026-11-11, final): ERC-2981 declares
+  5% (500 bps) to the treasury, set once in the constructor — NO setter,
+  so the rate/recipient can never change. An operator allowlist blocks
+  transfers by non-allowlisted marketplace contracts, so sales can only
+  go through royalty-respecting venues (OpenSea Seaport). Direct
+  wallet-to-wallet transfers and transfers by EOAs are always allowed.
+  The allowlist IS owner-updatable (setOperatorAllowed) — the check
+  cannot be disabled, only the list can grow. OPEN: the Seaport contract
+  address on Robinhood Chain 4663 is NOT the canonical Ethereum address
+  (verified: no code at Seaport 1.1/1.5/1.6 canonical addresses) — it
+  must be verified onchain and added via setOperatorAllowed BEFORE
+  trading opens, or no marketplace sale can execute.
 - baseURI set ONCE in the constructor (no setter). PLACEHOLDER now:
   `https://nftarchive.github.io/bitforge/metadata/` — MUST be the real
   repo Pages URL at deploy. tokenURI = baseURI + rarity_serial + ".json".
@@ -46,17 +58,16 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
   (not used by this contract — no ETH payments).
 
 ## Verification (no gas spent, no real deploy)
-- `forge test`: **12/12 PASS** (team pre-mints + Legendary split,
-  free mint open to any wallet, 1/wallet, bad proof reverts, tier
-  boundaries, mint window, finalize time-lock, tokenURI, owner-only
-  powers, constructor guards).
+- `forge test`: **19/19 PASS** (12 original + 7 royalty: royaltyInfo 5% to
+  treasury, ERC-2981 interface, operator blocked/allowed, owner self-transfer,
+  EOA transfer, setOperatorAllowed owner-only).
 - Mainnet-fork dry run (`forge script --fork-url
   https://rpc.mainnet.chain.robinhood.com`): **clean**. Guards printed
   "Chain ID: 4663" + "Gas token: ETH". Simulated deploy:
   BitForge 0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519 (FORK ARTIFACT —
-  NOT a real deploy), mintStart 1794301499, mintEnd 1794906299 (7d),
-  totalSupply 131, C85/R30/E13/L3. Estimated gas ~13,947,065,
-  ~0.00056 ETH.
+  NOT a real deploy), mintStart 1794353337, mintEnd 1794958137 (7d),
+  totalSupply 131, C85/R30/E13/L3. Estimated gas ~14,251,347,
+  ~0.00057 ETH.
 - Free-mint PoW nonce for tests computed offchain (ethers + SHA-256):
   wallet 0x3001, seed 0x1111…1111, nonce 251724 (19 leading zero bits).
 
@@ -78,7 +89,7 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
 - `src/BitForge.sol` — the only contract.
 - `script/Deploy.s.sol` — deploy (Robinhood 4663, chain guard, no
   external-token checks needed — there is no external token).
-- `test/BitForge.t.sol` — 12 tests.
+- `test/BitForge.t.sol` — 19 tests (12 original + 7 royalty).
 - `broadcast/Deploy.s.sol/4663/dry-run/` — fork dry-run record.
 - Art set: `~/workspace/bitforge-nft/` (3,131 images + metadata).
 - Base draft this was reworked from:

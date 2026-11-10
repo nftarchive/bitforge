@@ -170,4 +170,76 @@ contract BitForgeTest is Test {
         vm.expectRevert("need 3-5 personal wallets");
         new BitForge("BitForge", "BTFG", BASE, treasury, two, SEED);
     }
+
+    // ---- creator fee 5% enforced (ERC-2981 + operator allowlist) ----
+
+    function testRoyaltyInfo() public view {
+        assertEq(nft.ROYALTY_BPS(), 500);
+        (address receiver, uint256 amount) = nft.royaltyInfo(1, 1 ether);
+        assertEq(receiver, treasury);
+        assertEq(amount, 0.05 ether);
+        (receiver, amount) = nft.royaltyInfo(1, 0.01 ether);
+        assertEq(receiver, treasury);
+        assertEq(amount, 0.0005 ether);
+    }
+
+    function testRoyaltyInterfaceSupported() public view {
+        // ERC-2981 interface id
+        assertTrue(nft.supportsInterface(0x2a55205a));
+        // ERC-721 interface id still supported
+        assertTrue(nft.supportsInterface(0x80ac58cd));
+    }
+
+    function testSetOperatorAllowedOwnerOnly() public {
+        address market = address(new MockMarketplace());
+        nft.setOperatorAllowed(market, true);
+        assertTrue(nft.operatorAllowed(market));
+        vm.prank(minter);
+        vm.expectRevert();
+        nft.setOperatorAllowed(market, false);
+    }
+
+    function testOperatorBlocked() public {
+        // Treasury owns token 1. Approve a mock marketplace (a contract).
+        MockMarketplace market = new MockMarketplace();
+        vm.prank(treasury);
+        nft.approve(address(market), 1);
+        // Non-allowlisted contract operator must revert.
+        vm.expectRevert(abi.encodeWithSelector(BitForge.OperatorNotAllowed.selector, address(market)));
+        market.move(address(nft), treasury, minter, 1);
+        assertEq(nft.ownerOf(1), treasury);
+    }
+
+    function testOperatorAllowed() public {
+        MockMarketplace market = new MockMarketplace();
+        nft.setOperatorAllowed(address(market), true);
+        vm.prank(treasury);
+        nft.approve(address(market), 1);
+        market.move(address(nft), treasury, minter, 1);
+        assertEq(nft.ownerOf(1), minter);
+    }
+
+    function testOwnerSelfTransfer() public {
+        // Owner moves their own NFT directly — always allowed.
+        vm.prank(treasury);
+        nft.transferFrom(treasury, minter, 1);
+        assertEq(nft.ownerOf(1), minter);
+    }
+
+    function testEoaTransfer() public {
+        // An approved EOA (not a contract) can move the NFT — always allowed.
+        address helper = address(0x4001);
+        vm.prank(treasury);
+        nft.approve(helper, 1);
+        vm.prank(helper);
+        nft.transferFrom(treasury, minter, 1);
+        assertEq(nft.ownerOf(1), minter);
+    }
+}
+
+/// @notice Minimal mock marketplace contract (an operator) for allowlist tests.
+contract MockMarketplace {
+    function move(address nft, address from, address to, uint256 tokenId) external {
+        BitForge(nft).transferFrom(from, to, tokenId);
+    }
 }

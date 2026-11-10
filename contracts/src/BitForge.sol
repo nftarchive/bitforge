@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -38,7 +39,17 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 ///      Old proofs void on rotation (puzzleSeed changes).
 ///      baseURI is set ONCE in the constructor (immutable after deploy, no
 ///      setBaseURI by design) — it MUST be the real repo Pages URL at deploy.
-contract BitForge is ERC721, Ownable, ReentrancyGuard {
+///      CREATOR FEE 5% ENFORCED (decided 2026-11-11): ERC-2981 declares 5%
+///      to the treasury, and an operator allowlist blocks transfers by
+///      non-allowlisted marketplace contracts, so sales can only go through
+///      royalty-respecting venues (OpenSea Seaport). Direct wallet-to-wallet
+///      transfers (owner moving their own NFT) and transfers by EOAs are
+///      always allowed. The 5% rate is set once in the constructor and has
+///      NO setter, so it can never be lowered or turned off. The allowlist
+///      itself IS owner-updatable (to add new marketplaces / rotate Seaport
+///      addresses) — the enforcement check cannot be disabled, only the
+///      list can grow.
+contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
     // ---- supply ----
@@ -77,6 +88,19 @@ contract BitForge is ERC721, Ownable, ReentrancyGuard {
 
     uint256 public constant MINT_WINDOW = 7 days;
 
+    // ---- creator fee (ERC-2981, 5% = 500 bps, denominator 10000) ----
+    // Set once in the constructor to the treasury. NO setter exists, so the
+    // rate and recipient can never change after deploy.
+    uint96 public constant ROYALTY_BPS = 500;
+
+    // ---- operator allowlist (royalty enforcement) ----
+    // Marketplace contracts that may move NFTs on owners' behalf (e.g.
+    // OpenSea Seaport). The owner can add/remove operators, but the
+    // enforcement check itself cannot be disabled.
+    mapping(address => bool) public operatorAllowed;
+
+    error OperatorNotAllowed(address operator);
+
     // Set ONCE in the constructor; no setter exists, so it can never change
     // after deploy. (Solidity forbids `immutable` on strings.)
     string public baseURI;
@@ -112,6 +136,7 @@ contract BitForge is ERC721, Ownable, ReentrancyGuard {
     event Minted(address indexed minter, uint256 indexed tokenId, uint8 rarity, uint256 serial, bool isFree);
     event PuzzleRotated(bytes32 indexed oldSeed, bytes32 indexed newSeed, string reason);
     event Finalized();
+    event OperatorAllowed(address indexed operator, bool allowed);
 
     constructor(
         string memory name_,
@@ -133,6 +158,8 @@ contract BitForge is ERC721, Ownable, ReentrancyGuard {
         }
         baseURI = baseURI_;
         treasury = treasury_;
+        // Creator fee 5% to the treasury, locked forever (no setter).
+        _setDefaultRoyalty(treasury_, ROYALTY_BPS);
         personalWallets = personalWallets_;
         mintStart = block.timestamp;
         mintEnd = block.timestamp + MINT_WINDOW;
@@ -262,6 +289,39 @@ contract BitForge is ERC721, Ownable, ReentrancyGuard {
     ///      chain, so this reads a parent-block hash — fine as entropy only.
     function _prevBlockhash() internal view returns (bytes32) {
         return block.number == 0 ? bytes32(0) : blockhash(block.number - 1);
+    }
+
+    // ============ creator fee enforcement (operator allowlist) ============
+
+    /// @notice Add or remove a marketplace operator (e.g. OpenSea Seaport).
+    ///         Only the owner can change the list. The enforcement check
+    ///         itself cannot be disabled — only the list can grow/shrink.
+    function setOperatorAllowed(address operator, bool allowed) external onlyOwner {
+        require(operator != address(0), "zero operator");
+        operatorAllowed[operator] = allowed;
+        emit OperatorAllowed(operator, allowed);
+    }
+
+    /// @notice Transfer restriction: a marketplace contract may only move
+    ///         NFTs if it is allowlisted. Mints (from == 0), burns
+    ///         (to == 0), owner self-transfers, and transfers by EOAs
+    ///         (code.length == 0) are always allowed. This forces sales
+    ///         through royalty-respecting venues, so the 5% ERC-2981 fee
+    ///         cannot be bypassed by selling on a zero-fee marketplace.
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+        address from = _ownerOf(tokenId);
+        if (from != address(0) && to != address(0)) {
+            address operator = msg.sender;
+            if (operator != from && operator.code.length > 0 && !operatorAllowed[operator]) {
+                revert OperatorNotAllowed(operator);
+            }
+        }
+        return super._update(to, tokenId, auth);
+    }
+
+    /// @notice ERC-165: declare ERC721 + ERC-2981 (royalty) support.
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     // ============ metadata ============
