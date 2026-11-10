@@ -29,11 +29,22 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
   go through royalty-respecting venues (OpenSea Seaport). Direct
   wallet-to-wallet transfers and transfers by EOAs are always allowed.
   The allowlist IS owner-updatable (setOperatorAllowed) — the check
-  cannot be disabled, only the list can grow. OPEN: the Seaport contract
-  address on Robinhood Chain 4663 is NOT the canonical Ethereum address
-  (verified: no code at Seaport 1.1/1.5/1.6 canonical addresses) — it
-  must be verified onchain and added via setOperatorAllowed BEFORE
-  trading opens, or no marketplace sale can execute.
+  cannot be disabled, only the list can grow.
+- SEAPORT ON ROBINHOOD CHAIN — CONFIRMED 2026-11-11 (verified onchain,
+  NOT assumed): **Seaport 1.6 = 0x0000000000000068F116a894984e2DB1123eB395**.
+  Verified 3 ways: (1) information() returns version "1.6" + conduit
+  controller 0x00000000f9490004c11cef243f5400493c00ad63; (2) bytecode
+  23,981 bytes, EXACT match to Seaport 1.6 on Ethereum; (3) actively
+  used — 3,222 events in 50,000 blocks, real NFT sales through it
+  (sample tx 0x43b05bb9... moved 5 NFTs). Envio's RH Chain ecosystem
+  index lists this exact address as OpenSea/Seaport. ADD via
+  setOperatorAllowed(seaport, true) BEFORE trading opens.
+  CONDUIT: the canonical Seaport conduit (0x1E0049783F008A0085193E00003D00cd54003c71)
+  has NO code on RH Chain, getConduit(OpenSea key) returns 0x0, and the
+  OpenSea conduit key does NOT appear in real sale calldata — orders on
+  RH Chain go through Seaport DIRECTLY (conduitKey 0x0). No conduit
+  allowlist needed. If a conduit ever appears, add it via
+  setOperatorAllowed (no redeploy needed).
 - baseURI set ONCE in the constructor (no setter). PLACEHOLDER now:
   `https://nftarchive.github.io/bitforge/metadata/` — MUST be the real
   repo Pages URL at deploy. tokenURI = baseURI + rarity_serial + ".json".
