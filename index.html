@@ -62,7 +62,7 @@
   .step h2 { margin:0 0 8px; font-size:16px; }
   .step h2 .n { color:var(--gold); }
   .step p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.5; }
-  button { background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:0; padding:11px 18px; font:inherit; font-weight:700; cursor:pointer; }
+  button { background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:0; padding:8px 14px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
   button:disabled { background:transparent; border-color:#333; color:#666; cursor:not-allowed; }
   .task { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid #262626; }
   .task:first-of-type { border-top:0; }
@@ -137,9 +137,9 @@
     <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
     <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
     <div class="taskout mono" id="out-t1"></div>
-    <div class="task"><input type="checkbox" id="t2"><label for="t2">Like + repost the launch post on <a id="launchLink2" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a></label></div>
+    <div class="task"><input type="checkbox" id="t2"><label for="t2">Like + repost the pinned post on <a id="launchLink2" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a></label></div>
     <div class="taskout mono" id="out-t2"></div>
-    <div class="task"><input type="checkbox" id="t3"><label for="t3">Reply to <a id="launchLink3" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">the launch post</a> with your wallet address (first 6 + last 4 is enough)</label></div>
+    <div class="task"><input type="checkbox" id="t3"><label for="t3">Reply to <a id="launchLink3" href="https://x.com/BitForge_hq" target="_blank" rel="noopener">the pinned post</a> and tag 2 friends</label></div>
     <div class="taskout mono" id="out-t3"></div>
   </div>
 
@@ -354,7 +354,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   }
 
   // ---- X tasks (honor system) ----
-  var TASK_CMD = { t1: "follow @BitForge_hq", t2: "like + repost launch post", t3: "reply to launch post" };
+  var TASK_CMD = { t1: "follow @BitForge_hq", t2: "like + repost pinned post", t3: "reply to pinned post + tag 2 friends" };
   ["t1", "t2", "t3"].forEach(function (id) {
     $(id).addEventListener("change", function () {
       var out = $("out-" + id);
