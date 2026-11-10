@@ -70,6 +70,11 @@
   .taskout:empty { display:none; }
   .mono { font-size:13px; word-break:break-all; }
   .ok { color:var(--green); } .warn { color:var(--red); } .mut { color:var(--muted); }
+  /* warna rarity ala OpenSea: Common putih-abu, Rare biru, Epic ungu, Legendary coklat-emas */
+  .rar-0 { color:#D1D5DB; }
+  .rar-1 { color:#3B82F6; }
+  .rar-2 { color:#A855F7; }
+  .rar-3 { color:#D97706; }
   .bar { height:8px; background:#2a2a2a; border-radius:4px; overflow:hidden; margin:8px 0; }
   .bar i { display:block; height:100%; background:var(--gold); width:0%; }
   .foot { color:var(--muted); font-size:12px; text-align:center; margin-top:28px; line-height:1.7; }
@@ -88,14 +93,14 @@
 
   <div class="hero">
     <div class="heroRobot" id="heroRobot"></div>
-    <div class="herocap"><b>Legendary #1</b> &mdash; tap the robot</div>
+    <div class="herocap"><b><span class="rar-3">Legendary</span> #1</b> &mdash; tap the robot</div>
   </div>
 
   <div class="strip">
-    <div class="mini"><div id="rCommon"></div><div class="lbl"><b>Common #1</b> &middot; 2 colors</div></div>
-    <div class="mini"><div id="rRare"></div><div class="lbl"><b>Rare #1</b> &middot; 3 colors</div></div>
-    <div class="mini"><div id="rEpic"></div><div class="lbl"><b>Epic #1</b> &middot; 4 colors</div></div>
-    <div class="mini"><div id="rCommon2"></div><div class="lbl"><b>Common #2</b> &middot; 2 colors</div></div>
+    <div class="mini"><div id="rCommon"></div><div class="lbl"><b><span class="rar-0">Common</span> #1</b> &middot; 2 colors</div></div>
+    <div class="mini"><div id="rRare"></div><div class="lbl"><b><span class="rar-1">Rare</span> #1</b> &middot; 3 colors</div></div>
+    <div class="mini"><div id="rEpic"></div><div class="lbl"><b><span class="rar-2">Epic</span> #1</b> &middot; 4 colors</div></div>
+    <div class="mini"><div id="rCommon2"></div><div class="lbl"><b><span class="rar-0">Common</span> #2</b> &middot; 2 colors</div></div>
   </div>
 
   <div class="tree"><span class="br">bitforge/</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">contracts/</span><br><span class="br">&brvbar;&nbsp;&nbsp; &boxur;&mdash;&mdash;</span> <span class="file">BitForge.sol</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">images/</span> <span class="cnt">3,131 files</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">metadata/</span> <span class="cnt">3,131 files</span><br><span class="br">&vdash;&mdash;&mdash;</span> <span class="dir">anim/</span> <span class="cnt">3,131 files</span><br><span class="br">&boxur;&mdash;&mdash;</span> <span class="file">index.html</span></div>
@@ -118,7 +123,14 @@
   </div>
 
   <div class="step" id="step2">
-    <h2><span class="n">$ 2.</span> X tasks</h2>
+    <h2><span class="n">$ 2.</span> Connect X</h2>
+    <p>One X account per wallet &mdash; this stops bot farms. Your X account must be at least <span id="minAgeLabel">30</span> days old.</p>
+    <button id="btnConnectX">[ Connect X ]</button>
+    <p class="mono" id="xLine"></p>
+  </div>
+
+  <div class="step" id="step3">
+    <h2><span class="n">$ 3.</span> X tasks</h2>
     <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
     <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
     <div class="taskout mono" id="out-t1"></div>
@@ -128,16 +140,16 @@
     <div class="taskout mono" id="out-t3"></div>
   </div>
 
-  <div class="step" id="step3">
-    <h2><span class="n">$ 3.</span> Solve the puzzle</h2>
+  <div class="step" id="step4">
+    <h2><span class="n">$ 4.</span> Solve the puzzle</h2>
     <p>Your browser solves it automatically &mdash; just wait. The puzzle proves you&rsquo;re not a bot.</p>
     <button id="btnSolve" disabled>[ Solve puzzle ]</button>
     <p class="mono mut" id="solveBar"></p>
-    <p class="mono" id="solveLine"><span class="mut">Locked &mdash; finish steps 1 and 2 first.</span></p>
+    <p class="mono" id="solveLine"><span class="mut">Locked &mdash; finish steps 1&ndash;3 first.</span></p>
   </div>
 
-  <div class="step" id="step4">
-    <h2><span class="n">$ 4.</span> Mint &mdash; free</h2>
+  <div class="step" id="step5">
+    <h2><span class="n">$ 5.</span> Mint &mdash; free</h2>
     <p>Price: 0. You only pay gas (ETH). Your robot&rsquo;s rarity is revealed instantly.</p>
     <button id="btnMint" disabled>[ Mint free ]</button>
     <p class="mono" id="mintLine"></p>
@@ -174,7 +186,11 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
     BASE_URI: "https://nftarchive.github.io/bitforge/metadata/",
     IMAGE_BASE: "https://nftarchive.github.io/bitforge/images/",
     X_PROFILE: "https://x.com/BitForge_hq",
-    LAUNCH_POST: "" // TODO: isi URL postingan launch asli begitu diposting, mis. "https://x.com/BitForge_hq/status/123..."
+    LAUNCH_POST: "", // TODO: isi URL postingan launch asli begitu diposting, mis. "https://x.com/BitForge_hq/status/123..."
+    X_CLIENT_ID: "", // TODO: Client ID aplikasi X (developer.x.com) — isi pas deploy
+    X_WORKER_URL: "", // TODO: URL Cloudflare Worker (tukar kode OAuth -> token) — isi pas deploy
+    X_REDIRECT_URI: "https://nftarchive.github.io/bitforge/",
+    MIN_X_AGE_DAYS: 30, // akun X minimal 30 hari (filter bot)
   };
 
   // Function selectors (verified against BitForge.sol with `cast sig`).
@@ -186,6 +202,8 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
     freeMintedBy: "0xdd4d2233",  // freeMintedBy(address)
     mintEnd: "0xea2b4ab2",       // mintEnd()
     freeRemaining: "0x5a781a6b", // freeRemaining()
+    tokenRarity: "0xafb0a369",   // tokenRarity(uint256) -> 0 common, 1 rare, 2 epic, 3 legendary
+    tokenSerial: "0x9b3ee2c3",   // tokenSerial(uint256) -> nomor dalam tier
     mintFree: "0xa4146733"       // mintFree(uint256)
   };
 
@@ -236,6 +254,32 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
   }
   function rpcUint(data) {
     return rpcCall(data).then(function (hex) { return BigInt(hex); });
+  }
+
+  // ---- hasil mint: nomor NFT + nomor rarity (warna ala OpenSea) ----
+  // tokenId = totalMinted (token di-mint berurutan, jadi token terakhir = totalMinted).
+  var RAR = ["Common", "Rare", "Epic", "Legendary"];
+  var RMAX = [2035, 730, 313, 53];
+  var RCLS = ["rar-0", "rar-1", "rar-2", "rar-3"];
+  function showMinted() {
+    rpcUint(SEL.totalMinted).then(function (tokenId) {
+      var id = Number(tokenId);
+      return Promise.all([
+        rpcUint(SEL.tokenRarity + hexPad32(id)),
+        rpcUint(SEL.tokenSerial + hexPad32(id))
+      ]).then(function (vals) {
+        var r = Number(vals[0]), serial = Number(vals[1]);
+        $("mintedBox").classList.remove("hidden");
+        $("mintedBox").innerHTML =
+          'BitForge <span class="' + RCLS[r] + '">' + RAR[r] + '</span> #' + id + '<br>' +
+          '<span class="' + RCLS[r] + '">' + RAR[r] + ' ' + serial + '/' + RMAX[r] + '</span><br>' +
+          'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
+        tlog('minted: BitForge ' + RAR[r] + ' #' + id + ' (' + RAR[r] + ' ' + serial + '/' + RMAX[r] + ')');
+      });
+    }).catch(function () {
+      $("mintedBox").classList.remove("hidden");
+      $("mintedBox").innerHTML = 'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
+    });
   }
 
   function refreshStats() {
@@ -324,13 +368,110 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
       checkUnlock();
     });
   });
+  // ---- Connect X (OAuth 2.0 + PKCE, via Cloudflare Worker) ----
+  // X API tidak mengizinkan panggilan langsung dari browser (tanpa header CORS),
+  // jadi tukar kode -> token + baca /2/users/me dilakukan lewat Worker (server).
+  var X = { configured: !!(CONFIG.X_CLIENT_ID && CONFIG.X_WORKER_URL), connected: false, username: null, ageDays: null };
+  function xAgeOk() { return X.ageDays !== null && X.ageDays >= CONFIG.MIN_X_AGE_DAYS; }
+  function xGateOn() { return X.configured; }
+  function xOk() { return !xGateOn() || (X.connected && xAgeOk()); }
+  function enableTasks() { ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = false; }); }
+  function b64url(buf) {
+    var bytes = new Uint8Array(buf), s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function randomStr(n) {
+    var arr = new Uint8Array(n), s = "", abc = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    crypto.getRandomValues(arr);
+    for (var i = 0; i < arr.length; i++) s += abc.charAt(arr[i] % 62);
+    return s;
+  }
+  function sha256B64url(str) {
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(b64url);
+  }
+  function showXConnected() {
+    $("btnConnectX").disabled = true;
+    $("btnConnectX").textContent = "[ @" + X.username + " ]";
+    $("xLine").innerHTML = '<span class="ok">&#10003;</span> @' + X.username + ' &middot; ' + X.ageDays + ' days old &middot; 1 X = 1 wallet';
+  }
+  $("btnConnectX").addEventListener("click", function () {
+    if (!X.configured) { $("xLine").innerHTML = '<span class="warn">X app belum disetel &mdash; isi Client ID + Worker URL di CONFIG pas deploy.</span>'; return; }
+    var verifier = randomStr(64), state = randomStr(24);
+    sessionStorage.setItem("bf_x_verifier", verifier);
+    sessionStorage.setItem("bf_x_state", state);
+    sha256B64url(verifier).then(function (challenge) {
+      var auth = "https://x.com/i/oauth2/authorize?response_type=code"
+        + "&client_id=" + encodeURIComponent(CONFIG.X_CLIENT_ID)
+        + "&redirect_uri=" + encodeURIComponent(CONFIG.X_REDIRECT_URI)
+        + "&scope=" + encodeURIComponent("users.read")
+        + "&state=" + encodeURIComponent(state)
+        + "&code_challenge=" + encodeURIComponent(challenge)
+        + "&code_challenge_method=S256";
+      window.location.href = auth;
+    });
+  });
+  // kembalian dari X: ?code=...&state=... -> verifikasi lewat Worker
+  (function handleXCallback() {
+    var q = new URLSearchParams(window.location.search);
+    var code = q.get("code");
+    if (!code) return;
+    if (q.get("state") !== sessionStorage.getItem("bf_x_state")) {
+      $("xLine").innerHTML = '<span class="warn">X login gagal: state tidak cocok. Coba lagi.</span>';
+      return;
+    }
+    var verifier = sessionStorage.getItem("bf_x_verifier");
+    history.replaceState(null, "", window.location.pathname);
+    $("xLine").textContent = "Verifying your X account...";
+    fetch(CONFIG.X_WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.error || !d.username || !d.created_at) {
+        $("xLine").innerHTML = '<span class="warn">X login gagal: ' + (d.error || "unknown") + '. Coba lagi.</span>';
+        return;
+      }
+      X.ageDays = Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000);
+      X.username = d.username;
+      if (!xAgeOk()) {
+        $("xLine").innerHTML = '<span class="warn">Akun @' + d.username + ' baru ' + X.ageDays + ' hari &mdash; minimal ' + CONFIG.MIN_X_AGE_DAYS + ' hari.</span>';
+        tlog('<span class="warn">X too new: @' + d.username + ' (' + X.ageDays + 'd)</span>');
+        return;
+      }
+      X.connected = true;
+      sessionStorage.setItem("bf_x_user", d.username);
+      sessionStorage.setItem("bf_x_age", String(X.ageDays));
+      showXConnected();
+      tlog('<span class="ok">X connected: @' + d.username + ' (' + X.ageDays + 'd)</span>');
+      enableTasks();
+      checkUnlock();
+    }).catch(function () {
+      $("xLine").innerHTML = '<span class="warn">Tidak bisa verifikasi akun X (Worker tidak merespons). Coba lagi.</span>';
+    });
+  })();
+  // pulihkan sesi X setelah refresh
+  (function restoreX() {
+    var u = sessionStorage.getItem("bf_x_user"), a = sessionStorage.getItem("bf_x_age");
+    if (!u || !a) return;
+    X.ageDays = parseInt(a, 10);
+    if (!xAgeOk()) return;
+    X.connected = true;
+    X.username = u;
+    showXConnected();
+    enableTasks();
+  })();
+
   function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
   function checkUnlock() {
-    var ready = !!state.wallet && tasksDone();
+    var ready = !!state.wallet && xOk() && tasksDone();
     $("btnSolve").disabled = !ready || state.nonce !== null;
+    var locked = !state.wallet ? "finish step 1 (Connect wallet)"
+      : !xOk() ? "finish step 2 (Connect X)"
+      : "finish step 3 (X tasks)";
     $("solveLine").innerHTML = ready
       ? (state.nonce !== null ? '<span class="ok">Puzzle solved.</span>' : "Ready — press Solve puzzle.")
-      : '<span class="mut">Locked — finish steps 1 and 2 first.</span>';
+      : '<span class="mut">Locked &mdash; ' + locked + '.</span>';
     if (ready && state.nonce !== null) $("btnMint").disabled = false;
   }
 
@@ -414,8 +555,7 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
       if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; tlog('<span class="warn">failed</span>'); $("btnMint").disabled = false; return; }
       $("mintLine").innerHTML = okLine("minted! check your wallet.");
       tlog(okLine("minted!"));
-      $("mintedBox").classList.remove("hidden");
-      $("mintedBox").innerHTML = 'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
+      showMinted();
       refreshStats();
     }).catch(function (e) {
       $("btnMint").disabled = false;
@@ -482,6 +622,13 @@ window.ROBOTS = {"legendary_1": [{"c": 2, "r": 10, "ch": "}", "color": "#F5C518"
   })();
 
   // ---- init ----
+  $("minAgeLabel").textContent = CONFIG.MIN_X_AGE_DAYS;
+  if (xGateOn()) {
+    ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = true; });
+  } else {
+    $("btnConnectX").disabled = true;
+    $("xLine").innerHTML = '<span class="mut">X gate off &mdash; isi Client ID + Worker URL di CONFIG pas deploy.</span>';
+  }
   if (CONFIG.LAUNCH_POST) {
     ["launchLink2", "launchLink3"].forEach(function (id) {
       var a = $(id);
