@@ -71,7 +71,7 @@
   .steps-tree { position:relative; margin:18px 0 0; }
   .steps-tree .step { position:relative; border-top:0; padding:16px 0 16px var(--ind,28px); }
   .steps-tree .step .node { position:absolute; left:calc(var(--nx,6px) - 6px); top:20px; width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:var(--bg); z-index:1; }
-  .steps-tree .step:not(.locked) .node { background:var(--gold); border-color:var(--gold); }
+  .steps-tree .step:not(.locked) .node { background:#fff; border-color:#fff; }
   .steps-tree .step.done .node { background:var(--green); border-color:var(--green); }
   /* siku: garis vertikal turun dari parent, lalu menekuk ke node sendiri */
   .steps-tree .step::before { content:""; position:absolute; left:calc(var(--px,6px) - 1px); top:0; width:calc(var(--nx,6px) - var(--px,6px) + 1px); height:26px; border-left:2px solid #fff; border-bottom:2px solid #fff; opacity:.55; }
