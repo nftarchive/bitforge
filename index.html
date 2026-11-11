@@ -351,6 +351,13 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   $("btnDisconnect").addEventListener("click", function () {
     state.wallet = null;
     sessionStorage.removeItem("bf_wallet");
+    // Minta wallet cabut izin situs (wallet_revokePermissions, best-effort —
+    // tidak semua wallet dukung; kalau tidak dukung, diabaikan). Tanpa ini,
+    // Rabby tetap menganggap situs sudah diizinkan dan Connect berikutnya
+    // langsung nyambung wallet lama tanpa menampilkan pemilih akun.
+    if (hasWallet()) {
+      window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }).catch(function () {});
+    }
     $("walletLine").innerHTML = "";
     $("btnConnect").disabled = false;
     $("btnConnect").textContent = "[ Connect wallet ]";
