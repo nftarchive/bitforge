@@ -14,12 +14,13 @@
 //
 // Why a Worker is needed: X API sends no CORS headers, so the browser
 // cannot call api.x.com directly. The Worker (server) has no CORS limit.
-// Signing also needs secp256k1 (Ethereum), which the Web Crypto API does
-// not provide — so ethers v6 is imported from esm.sh.
+// Signing uses secp256k1 (Ethereum) via @noble/curves + @noble/hashes,
+// bundled into this single file (no remote imports — Cloudflare Workers
+// cannot import from URLs).
 //
 // DEPLOY (free, Cloudflare Workers free tier):
 //   1. Cloudflare account (free) -> Workers & Pages -> Create Worker.
-//   2. Paste this file, Deploy.
+//   2. Paste the BUNDLED file (worker.js), Deploy.
 //   3. Settings -> Variables, add secrets (NOT plain variables):
 //        X_CLIENT_ID    = Client ID of the X app BitForgeHQ
 //                         (developer.x.com -> app BitForge -> OAuth 2.0,
@@ -39,9 +40,79 @@
 // replayed for another wallet, contract, or chain. After the wallet mints
 // once, the signature is useless anyway (1 mint/wallet onchain).
 
-import { Wallet, solidityPackedKeccak256, getBytes } from "https://esm.sh/ethers@6.13.0";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const SIG_TTL_SECONDS = 3600; // signature valid for 1 hour
+
+function hexToBytes(hex) {
+  const h = hex.replace(/^0x/, "");
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+function bytesToHex(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += bytes[i].toString(16).padStart(2, "0");
+  return "0x" + s;
+}
+
+function u256ToBytes(n) {
+  const out = new Uint8Array(32);
+  let v = BigInt(n);
+  for (let i = 31; i >= 0; i--) {
+    out[i] = Number(v & 0xffn);
+    v >>= 8n;
+  }
+  return out;
+}
+
+function concatBytes(...parts) {
+  let len = 0;
+  for (const p of parts) len += p.length;
+  const out = new Uint8Array(len);
+  let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+// Ethereum signed message: keccak256("\x19Ethereum Signed Message:\n32" + digest)
+function ethSignedHash(digest) {
+  const prefix = new TextEncoder().encode("\x19Ethereum Signed Message:\n32");
+  return keccak_256(concatBytes(prefix, digest));
+}
+
+// Sign (wallet, deadline, contract, chainId) exactly like
+// BitForge.mintDigest: keccak256(abi.encodePacked(wallet, deadline, contract, chainId)).
+// noble v2 sign() returns 64 compact bytes (r||s) with no recovery id, so the
+// recovery bit is found by trial against the signer's public key.
+function signMint(wallet, deadline, contract, chainId, privKeyHex) {
+  const packed = concatBytes(
+    hexToBytes(wallet),
+    u256ToBytes(deadline),
+    hexToBytes(contract),
+    u256ToBytes(chainId)
+  );
+  const digest = keccak_256(packed);
+  const msgHash = ethSignedHash(digest);
+  const privKey = hexToBytes(privKeyHex);
+  const sigBytes = secp256k1.sign(msgHash, privKey, { prehash: false });
+  const pubKey = secp256k1.getPublicKey(privKey);
+  let recovery = -1;
+  for (const bit of [0, 1]) {
+    const sig = secp256k1.Signature.fromBytes(sigBytes, "compact").addRecoveryBit(bit);
+    const recovered = sig.recoverPublicKey(msgHash).toBytes(true);
+    let same = recovered.length === pubKey.length;
+    if (same) for (let i = 0; i < recovered.length; i++) if (recovered[i] !== pubKey[i]) { same = false; break; }
+    if (same) { recovery = bit; break; }
+  }
+  if (recovery < 0) throw new Error("recovery failed");
+  const r = bytesToHex(sigBytes.slice(0, 32)).slice(2);
+  const s = bytesToHex(sigBytes.slice(32)).slice(2);
+  const v = (recovery + 27).toString(16).padStart(2, "0");
+  return "0x" + r + s + v;
+}
 
 export default {
   async fetch(request, env) {
@@ -113,15 +184,15 @@ export default {
     }
 
     // X login verified. Sign the mint authorization for this wallet.
-    // Digest must match BitForge.mintDigest(wallet, deadline):
-    // keccak256(abi.encodePacked(wallet, deadline, contract, chainId)).
     const deadline = Math.floor(Date.now() / 1000) + SIG_TTL_SECONDS;
-    const digest = solidityPackedKeccak256(
-      ["address", "uint256", "address", "uint256"],
-      [wallet, deadline, contract, chainId]
-    );
-    const signer = new Wallet(env.MINT_SIGNER_KEY);
-    const signature = await signer.signMessage(getBytes(digest));
+    let signature;
+    try {
+      signature = signMint(wallet, deadline, contract, chainId, env.MINT_SIGNER_KEY);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: "sign_failed" }), {
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ connected: true, signature, deadline }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
