@@ -128,7 +128,7 @@
 
   <div class="step" id="step2">
     <h2><span class="n">$ 2.</span> Connect X</h2>
-    <p>One X account per wallet &mdash; this stops bot farms. Connect with your X account to continue.</p>
+    <p>Connect with your X account to continue &mdash; a login check on top of the puzzle.</p>
     <button id="btnConnectX">[ Connect X ]</button>
     <p class="mono" id="xLine"></p>
   </div>
@@ -191,7 +191,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     IMAGE_BASE: "https://nftarchive.github.io/bitforge/images/",
     X_PROFILE: "https://x.com/BitForge_hq",
     LAUNCH_POST: "", // TODO: isi URL postingan launch asli begitu diposting, mis. "https://x.com/BitForge_hq/status/123..."
-    X_CLIENT_ID: "", // TODO: Client ID aplikasi X (developer.x.com) — isi pas deploy
+    X_CLIENT_ID: "ZzVJMURXcWw4OEpPZXZZZFJaakQ6MTpjaQ", // Client ID aplikasi X BitForgeHQ (Native App / Public client, PKCE) — 2026-11-11
     X_WORKER_URL: "", // TODO: URL Cloudflare Worker (tukar kode OAuth -> token) — isi pas deploy
     X_REDIRECT_URI: "https://nftarchive.github.io/bitforge/",
   };
@@ -374,7 +374,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // X API tidak mengizinkan panggilan langsung dari browser (tanpa header CORS),
   // jadi tukar kode -> token dilakukan lewat Worker (server). Worker TIDAK
   // memanggil /2/users/me (biaya $0.01/user) — login saja yang diverifikasi,
-  // username + umur akun tidak dicek (gratis, $0).
+  // username + umur akun tidak dicek (tanpa panggilan data API; $0-nya masih
+  // perlu dites live begitu Worker dipasang).
   var X = { configured: !!(CONFIG.X_CLIENT_ID && CONFIG.X_WORKER_URL), connected: false };
   function xGateOn() { return X.configured; }
   function xOk() { return !xGateOn() || X.connected; }
@@ -396,7 +397,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   function showXConnected() {
     $("btnConnectX").disabled = true;
     $("btnConnectX").textContent = "[ X connected ]";
-    $("xLine").innerHTML = '<span class="ok">&#10003;</span> X connected &middot; 1 X = 1 wallet';
+    $("xLine").innerHTML = '<span class="ok">&#10003;</span> X connected &middot; login verified';
   }
   $("btnConnectX").addEventListener("click", function () {
     if (!X.configured) { $("xLine").innerHTML = '<span class="warn">X connect opens when mint opens.</span>'; return; }
