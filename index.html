@@ -114,6 +114,11 @@
 
   <p class="statsline">minted: <b id="stMinted">&ndash;</b> / 3,131 &nbsp;&middot;&nbsp; free left: <b id="stFree">&ndash;</b> &nbsp;&middot;&nbsp; difficulty: <b id="stTier">&ndash;</b></p>
 
+  <div id="chainBar">
+    <button id="btnSwitchChain">[ Switch to Robinhood Chain ]</button>
+    <p class="mono" id="chainLine"></p>
+  </div>
+
   <div id="notDeployed" class="step hidden">
     <h2><span class="n">!</span> Mint not open yet</h2>
     <p>The contract is not deployed yet. Come back when the mint opens.</p>
@@ -393,6 +398,21 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       throw e;
     });
   }
+
+  // Tombol pindah chain manual (di atas halaman) — bisa dipakai sebelum connect.
+  $("btnSwitchChain").addEventListener("click", function () {
+    if (!hasWallet()) {
+      $("chainLine").innerHTML = '<span class="warn">No wallet found. Install MetaMask or another EVM wallet, then reload.</span>';
+      return;
+    }
+    $("chainLine").textContent = "Switching to Robinhood Chain...";
+    switchChain().then(function () {
+      $("chainLine").innerHTML = okLine("switched to Robinhood Chain (4663)");
+      tlog(okLine("switched to Robinhood Chain (4663)"));
+    }).catch(function (e) {
+      $("chainLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
+    });
+  });
 
   // ---- X tasks (honor system) ----
   var TASK_CMD = { t1: "follow @BitForge_hq", t2: "like + repost pinned post", t3: "reply to pinned post + tag 2 friends" };
