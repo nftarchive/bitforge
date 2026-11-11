@@ -36,7 +36,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 ///      Puzzle preimage matches the website solver exactly:
 ///      SHA-256(hex(seed) + ":" + decimal(nonce)), leading-zero-bit target.
 ///      Seed is wallet-bound: seedFor(wallet) = keccak256(wallet, puzzleSeed).
-///      Old proofs void on rotation (puzzleSeed changes).
+///      Difficulty is FLAT (PUZZLE_BITS = 20) for all 3,000 free mints — no
+///      tiers, no rotation. puzzleSeed is set once at deploy and never changes.
 ///      baseURI is set ONCE in the constructor (immutable after deploy, no
 ///      setBaseURI by design) — it MUST be the real repo Pages URL at deploy.
 ///      CREATOR FEE 5% ENFORCED (decided 2026-11-11): ERC-2981 declares 5%
@@ -76,15 +77,12 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
     uint256 public constant PERSONAL_EPIC = 3;
     uint256 public constant PERSONAL_LEGENDARY = 2;
 
-    // ---- puzzle tiers (leading zero bits), rescaled for 3,000 free mints ----
-    uint256 public constant TIER_EASY_BITS = 18;
-    uint256 public constant TIER_MEDIUM_BITS = 23;
-    uint256 public constant TIER_HARD_BITS = 28;
-    uint256 public constant TIER_SUPERHARD_BITS = 32;
-    // tier boundaries by free-mint count (next free mint number)
-    uint256 public constant EASY_END = 600; // free mints #1-600
-    uint256 public constant MEDIUM_END = 1500; // #601-1500
-    uint256 public constant HARD_END = 2700; // #1501-2700, #2701-3000 SUPERHARD
+    // ---- puzzle difficulty (leading zero bits), FLAT for all 3,000 free mints ----
+    // BitForge is NOT an agent project: users mint manually from the browser,
+    // so the puzzle must be solvable in seconds on a phone. 20 bits ≈ 1M
+    // hashes ≈ 16 s on a slow device, ~3 s on a good phone. One difficulty
+    // for every mint — no tiers, no rotation, no surprises.
+    uint256 public constant PUZZLE_BITS = 20;
 
     uint256 public constant MINT_WINDOW = 7 days;
 
@@ -130,11 +128,9 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
     mapping(address => bool) public freeMintedBy;
 
     bytes32 public puzzleSeed;
-    uint256 public puzzleNonce;
     bool public finalized;
 
     event Minted(address indexed minter, uint256 indexed tokenId, uint8 rarity, uint256 serial, bool isFree);
-    event PuzzleRotated(bytes32 indexed oldSeed, bytes32 indexed newSeed, string reason);
     event Finalized();
     event OperatorAllowed(address indexed operator, bool allowed);
 
@@ -215,25 +211,11 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         return keccak256(abi.encodePacked(wallet, puzzleSeed));
     }
 
-    /// @notice Leading-zero-bit target for the NEXT free mint (by free-mint count).
-    function tierBits() public view returns (uint256) {
-        return tierBitsFor(freeMinted);
-    }
-
-    /// @notice Leading-zero-bit target for a given free-mint count.
-    function tierBitsFor(uint256 freeCount) public pure returns (uint256) {
-        if (freeCount < EASY_END) return TIER_EASY_BITS;
-        if (freeCount < MEDIUM_END) return TIER_MEDIUM_BITS;
-        if (freeCount < HARD_END) return TIER_HARD_BITS;
-        return TIER_SUPERHARD_BITS;
-    }
-
-    /// @notice Tier index for the next free mint: 0 EASY, 1 MEDIUM, 2 HARD, 3 SUPERHARD.
-    function currentTier() public view returns (uint256) {
-        if (freeMinted < EASY_END) return 0;
-        if (freeMinted < MEDIUM_END) return 1;
-        if (freeMinted < HARD_END) return 2;
-        return 3;
+    /// @notice Leading-zero-bit target for the NEXT free mint. Flat: the same
+    ///         PUZZLE_BITS for every mint. Kept (same selector) for the mint
+    ///         site, which reads it to show the difficulty.
+    function tierBits() public pure returns (uint256) {
+        return PUZZLE_BITS;
     }
 
     /// @notice Offchain check: does `nonce` solve `wallet`'s current puzzle?
@@ -252,10 +234,6 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         freeMintedBy[msg.sender] = true;
         _mintNext(msg.sender, msg.sender);
         freeMinted++;
-        // Automatic rotation at tier transitions (old proofs void).
-        if (freeMinted == EASY_END || freeMinted == MEDIUM_END || freeMinted == HARD_END) {
-            _rotatePuzzle("tier");
-        }
     }
 
     // ============ finalize (owner-only; closes the mint, no payouts — all free) ============
@@ -267,21 +245,6 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         require(totalMinted == MAX_SUPPLY || block.timestamp >= mintEnd, "not ready");
         finalized = true;
         emit Finalized();
-    }
-
-    // ============ puzzle rotation (owner: emergency only) ============
-
-    /// @notice Emergency rotation when solver tools circulate. Disclosed power:
-    ///         voids old proofs, touches no funds, caps, or fees.
-    function rotatePuzzle() external onlyOwner {
-        _rotatePuzzle("emergency");
-    }
-
-    function _rotatePuzzle(string memory reason) internal {
-        bytes32 oldSeed = puzzleSeed;
-        puzzleNonce++;
-        puzzleSeed = keccak256(abi.encodePacked(oldSeed, _prevBlockhash(), puzzleNonce));
-        emit PuzzleRotated(oldSeed, puzzleSeed, reason);
     }
 
     /// @notice Previous block's hash (0 on a genesis block, where it doesn't exist).

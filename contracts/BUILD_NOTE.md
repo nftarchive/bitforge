@@ -16,12 +16,13 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
   at least one Epic or Legendary). Team rarities are DETERMINISTIC
   (assigned in the constructor), never random — Cinder's personal 31
   got 0 Legendary; that cannot recur here.
-- Puzzle tiers rescaled for 3,000 free mints: EASY 18 bits (#1–600),
-  MEDIUM 23 (#601–1,500), HARD 28 (#1,501–2,700), SUPERHARD 32 (#2,701–3,000).
+- Puzzle difficulty FLAT (2026-11-12, user decision — BitForge is NOT an
+  agent project, users mint manually): PUZZLE_BITS = 20 for ALL 3,000 free
+  mints. No tiers, no rotation. ~16 s on a slow device, ~3 s on a good phone.
 - Mint window: 7 days (DEFAULT — confirm before deploy).
 - Owner powers ONLY: finalize() (time-locked, closes mint, no payouts —
-  all free) + rotatePuzzle() (emergency). No pause, no setPrice, no
-  setBaseURI, no upgrade, no withdraw.
+  all free). No pause, no setPrice, no setBaseURI, no upgrade, no withdraw,
+  no rotatePuzzle (removed 2026-11-12).
 - CREATOR FEE 5% ENFORCED (decided 2026-11-11, final): ERC-2981 declares
   5% (500 bps) to the treasury, set once in the constructor — NO setter,
   so the rate/recipient can never change. An operator allowlist blocks

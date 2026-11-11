@@ -15,9 +15,9 @@ contract BitForgeTest is Test {
 
     // Fixed puzzle seed for the tests (deterministic nonces, computed offchain).
     bytes32 constant SEED = 0x1111111111111111111111111111111111111111111111111111111111111111;
-    // Valid EASY (18-bit) nonce for `minter` against SEED — computed offchain
-    // (19 leading zero bits).
-    uint256 constant MINTER_NONCE = 251724;
+    // Valid flat (20-bit) nonce for `minter` against SEED — computed offchain
+    // (20 leading zero bits).
+    uint256 constant MINTER_NONCE = 833880;
 
     string constant BASE = "https://nftarchive.github.io/bitforge/metadata/";
 
@@ -86,17 +86,11 @@ contract BitForgeTest is Test {
         nft.mintFree(MINTER_NONCE + 1);
     }
 
-    // ---- puzzle tiers (pure function, boundary-tested without 600 mints) ----
+    // ---- puzzle difficulty is FLAT (PUZZLE_BITS for every mint) ----
 
-    function testTierBitsBoundaries() public view {
-        assertEq(nft.tierBitsFor(0), 18);
-        assertEq(nft.tierBitsFor(599), 18);
-        assertEq(nft.tierBitsFor(600), 23);
-        assertEq(nft.tierBitsFor(1499), 23);
-        assertEq(nft.tierBitsFor(1500), 28);
-        assertEq(nft.tierBitsFor(2699), 28);
-        assertEq(nft.tierBitsFor(2700), 32);
-        assertEq(nft.tierBitsFor(2999), 32);
+    function testPuzzleBitsFlat() public view {
+        assertEq(nft.tierBits(), 20);
+        assertEq(nft.tierBits(), nft.PUZZLE_BITS());
     }
 
     // ---- mint window + finalize ----
@@ -128,15 +122,6 @@ contract BitForgeTest is Test {
     }
 
     // ---- owner powers ----
-
-    function testRotatePuzzleOwnerOnly() public {
-        bytes32 before = nft.puzzleSeed();
-        nft.rotatePuzzle();
-        assertTrue(nft.puzzleSeed() != before);
-        vm.prank(minter);
-        vm.expectRevert();
-        nft.rotatePuzzle();
-    }
 
     function testFinalizeOwnerOnly() public {
         vm.warp(nft.mintEnd() + 1);
