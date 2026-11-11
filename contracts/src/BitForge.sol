@@ -6,12 +6,17 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title BitForge — ERC-721 collection (3,131), ALL-FREE, Robinhood Chain (4663)
-/// @notice 3,000 public free mints (PoW-gated, 1/wallet) + 131 team pre-minted
-///         BY THE CONTRACT ITSELF in the constructor (100 treasury, 31 personal
-///         across 3-5 wallets). NO paid mint, NO token, NO pool, NO burn, NO
-///         market contract — secondary trading is on OpenSea only.
+/// @notice 3,000 public free mints (PoW-gated + X-signature-gated, 1/wallet) +
+///         131 team pre-minted BY THE CONTRACT ITSELF in the constructor
+///         (100 treasury, 31 personal across 3-5 wallets). NO paid mint, NO
+///         token, NO pool, NO burn, NO market contract — secondary trading is
+///         on OpenSea only. X-signature gate ("cap"): mintFree requires a
+///         signature from the mintSigner (Cloudflare Worker), issued only after
+///         a real X OAuth login — bots calling the contract directly revert.
 ///         Rarity = COLOR COUNT (decided 2026-11-10): every robot is mixed-color;
 ///         higher rarity = more colors. Common 2 colors, Rare 3, Epic 4,
 ///         Legendary 6 (all). Totals: Common 2,035 / Rare 730 / Epic 313 /
@@ -130,7 +135,15 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
     bytes32 public puzzleSeed;
     bool public finalized;
 
+    // ---- X-login gate ("cap"): the Cloudflare Worker signs (wallet, deadline)
+    //      after a real X OAuth login. mintFree requires that signature, so a
+    //      bot calling the contract directly (no X login, no signature) reverts.
+    //      The signer key lives ONLY in the Worker (Cloudflare secret) + the
+    //      user's Bitget. Owner can rotate it with setMintSigner if compromised.
+    address public mintSigner;
+
     event Minted(address indexed minter, uint256 indexed tokenId, uint8 rarity, uint256 serial, bool isFree);
+    event MintSignerSet(address indexed oldSigner, address indexed newSigner);
     event Finalized();
     event OperatorAllowed(address indexed operator, bool allowed);
 
@@ -140,10 +153,12 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         string memory baseURI_,
         address treasury_,
         address[] memory personalWallets_,
-        bytes32 puzzleSeed_
+        bytes32 puzzleSeed_,
+        address mintSigner_
     ) ERC721(name_, symbol_) Ownable(msg.sender) {
         require(bytes(baseURI_).length > 0, "empty baseURI");
         require(treasury_ != address(0), "zero treasury");
+        require(mintSigner_ != address(0), "zero mint signer");
         require(personalWallets_.length >= 3 && personalWallets_.length <= 5, "need 3-5 personal wallets");
         for (uint256 i = 0; i < personalWallets_.length; i++) {
             require(personalWallets_[i] != address(0), "zero personal wallet");
@@ -154,6 +169,7 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         }
         baseURI = baseURI_;
         treasury = treasury_;
+        mintSigner = mintSigner_;
         // Creator fee 5% to the treasury, locked forever (no setter).
         _setDefaultRoyalty(treasury_, ROYALTY_BPS);
         personalWallets = personalWallets_;
@@ -223,14 +239,37 @@ contract BitForge is ERC721, ERC2981, Ownable, ReentrancyGuard {
         return _leadingZeroBits(_proofDigest(wallet, nonce)) >= tierBits();
     }
 
-    // ============ free mint (PoW-gated, 1/wallet) ============
+    /// @notice The digest the Worker signs for `wallet` until `deadline`.
+    ///         Binds the signature to this wallet, this contract, and this chain.
+    function mintDigest(address wallet, uint256 deadline) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(wallet, deadline, address(this), block.chainid));
+    }
 
-    function mintFree(uint256 nonce) external nonReentrant {
+    /// @notice Rotate the X-gate signer (owner only, e.g. if the Worker key leaks).
+    function setMintSigner(address newSigner) external onlyOwner {
+        require(newSigner != address(0), "zero mint signer");
+        address oldSigner = mintSigner;
+        mintSigner = newSigner;
+        emit MintSignerSet(oldSigner, newSigner);
+    }
+
+    // ============ free mint (PoW-gated + X-signature-gated, 1/wallet) ============
+
+    function mintFree(uint256 nonce, uint256 deadline, bytes calldata signature) external nonReentrant {
         require(!finalized, "mint closed");
         require(block.timestamp >= mintStart && block.timestamp <= mintEnd, "mint window closed");
         require(freeMinted < FREE_SUPPLY, "free sold out");
         require(!freeMintedBy[msg.sender], "free already claimed");
+        require(block.timestamp <= deadline, "signature expired");
         require(verifyProof(msg.sender, nonce), "bad proof");
+        // X-login gate: only the Worker (mintSigner) can issue this signature,
+        // and only after a real X OAuth login. Direct contract calls by bots
+        // (no signature) revert here.
+        address recovered = ECDSA.recover(
+            MessageHashUtils.toEthSignedMessageHash(mintDigest(msg.sender, deadline)),
+            signature
+        );
+        require(recovered == mintSigner, "bad signature");
         freeMintedBy[msg.sender] = true;
         _mintNext(msg.sender, msg.sender);
         freeMinted++;

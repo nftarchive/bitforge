@@ -19,6 +19,14 @@ market contract, no paid mint. Secondary trading is on OpenSea only.
 - Puzzle difficulty FLAT (2026-11-12, user decision — BitForge is NOT an
   agent project, users mint manually): PUZZLE_BITS = 20 for ALL 3,000 free
   mints. No tiers, no rotation. ~16 s on a slow device, ~3 s on a good phone.
+- X-SIGNATURE GATE ("cap", 2026-11-12, user decision — public mint = bot race):
+  mintFree(uint256 nonce, uint256 deadline, bytes signature) requires a
+  signature from mintSigner (Cloudflare Worker key), issued only after a real
+  X OAuth login. Signature covers (wallet, deadline, contract, chainId),
+  valid 1 hour. Bots calling the contract directly revert ("bad signature").
+  mintSigner is owner-rotatable via setMintSigner. Signer address:
+  0x47Bd98c8326168A0747DaE856A2A952ebD100E9a (private key held ONLY by the
+  user in Bitget + as a Cloudflare Worker secret — NEVER in the repo).
 - Mint window: 7 days (DEFAULT — confirm before deploy).
 - Owner powers ONLY: finalize() (time-locked, closes mint, no payouts —
   all free). No pause, no setPrice, no setBaseURI, no upgrade, no withdraw,

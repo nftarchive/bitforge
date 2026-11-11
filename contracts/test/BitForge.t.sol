@@ -19,14 +19,37 @@ contract BitForgeTest is Test {
     // (20 leading zero bits).
     uint256 constant MINTER_NONCE = 833880;
 
+    // X-gate signer for the tests (fixed test key — NEVER a real key).
+    uint256 constant SIGNER_PK = 0x4242424242424242424242424242424242424242424242424242424242424242;
+    address signer;
+
     string constant BASE = "https://nftarchive.github.io/bitforge/metadata/";
 
     function setUp() public {
+        signer = vm.addr(SIGNER_PK);
         address[] memory personal = new address[](3);
         personal[0] = personal1;
         personal[1] = personal2;
         personal[2] = personal3;
-        nft = new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED);
+        nft = new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED, signer);
+    }
+
+    // Sign (wallet, deadline) the way the Worker does: eth-signed message
+    // over mintDigest(wallet, deadline).
+    function _signFor(address wallet, uint256 deadline) internal view returns (bytes memory) {
+        bytes32 digest = nft.mintDigest(wallet, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(SIGNER_PK, _toEthSigned(digest));
+        return abi.encodePacked(r, s, v);
+    }
+
+    function _toEthSigned(bytes32 digest) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", digest));
+    }
+
+    // A valid signature for `minter` with a 1-hour deadline.
+    function _sig() internal view returns (uint256 deadline, bytes memory sig) {
+        deadline = block.timestamp + 1 hours;
+        sig = _signFor(minter, deadline);
     }
 
     // ---- team pre-mints (deterministic split) ----
@@ -65,25 +88,78 @@ contract BitForgeTest is Test {
 
     function testFreeMintOpenToAnyWallet() public {
         assertTrue(nft.verifyProof(minter, MINTER_NONCE), "nonce must verify");
+        (uint256 deadline, bytes memory sig) = _sig();
         vm.prank(minter);
-        nft.mintFree(MINTER_NONCE);
+        nft.mintFree(MINTER_NONCE, deadline, sig);
         assertEq(nft.balanceOf(minter), 1);
         assertEq(nft.freeMinted(), 1);
         assertTrue(nft.freeMintedBy(minter));
     }
 
     function testFreeMintOnePerWallet() public {
+        (uint256 deadline, bytes memory sig) = _sig();
         vm.prank(minter);
-        nft.mintFree(MINTER_NONCE);
+        nft.mintFree(MINTER_NONCE, deadline, sig);
         vm.prank(minter);
         vm.expectRevert("free already claimed");
-        nft.mintFree(MINTER_NONCE);
+        nft.mintFree(MINTER_NONCE, deadline, sig);
     }
 
     function testBadProofReverts() public {
+        (uint256 deadline, bytes memory sig) = _sig();
         vm.prank(minter);
         vm.expectRevert("bad proof");
-        nft.mintFree(MINTER_NONCE + 1);
+        nft.mintFree(MINTER_NONCE + 1, deadline, sig);
+    }
+
+    // ---- X-signature gate ("cap") ----
+
+    function testMintWithoutSignatureReverts() public {
+        // A bot calling mintFree directly with no signature (empty bytes).
+        vm.prank(minter);
+        vm.expectRevert();
+        nft.mintFree(MINTER_NONCE, block.timestamp + 1 hours, "");
+    }
+
+    function testBadSignatureReverts() public {
+        // Signature from the WRONG key (not the mintSigner).
+        uint256 wrongPk = 0x9999999999999999999999999999999999999999999999999999999999999999;
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 digest = nft.mintDigest(minter, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongPk, _toEthSigned(digest));
+        vm.prank(minter);
+        vm.expectRevert("bad signature");
+        nft.mintFree(MINTER_NONCE, deadline, abi.encodePacked(r, s, v));
+    }
+
+    function testExpiredSignatureReverts() public {
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory sig = _signFor(minter, deadline);
+        vm.warp(deadline + 1);
+        vm.prank(minter);
+        vm.expectRevert("signature expired");
+        nft.mintFree(MINTER_NONCE, deadline, sig);
+    }
+
+    function testSignatureBoundToWallet() public {
+        // A signature issued for `minter` cannot be used by another wallet.
+        // `other` has its own valid proof (nonce 236314, 20 bits) so the
+        // proof passes and the failure must come from the signature check.
+        (uint256 deadline, bytes memory sig) = _sig();
+        address other = address(0x4001);
+        assertTrue(nft.verifyProof(other, 236314), "other nonce must verify");
+        vm.prank(other);
+        vm.expectRevert("bad signature");
+        nft.mintFree(236314, deadline, sig);
+    }
+
+    function testSetMintSignerOwnerOnly() public {
+        address newSigner = address(0x5001);
+        vm.prank(minter);
+        vm.expectRevert();
+        nft.setMintSigner(newSigner);
+        nft.setMintSigner(newSigner);
+        assertEq(nft.mintSigner(), newSigner);
     }
 
     // ---- puzzle difficulty is FLAT (PUZZLE_BITS for every mint) ----
@@ -97,9 +173,10 @@ contract BitForgeTest is Test {
 
     function testMintWindowClosedAfterEnd() public {
         vm.warp(nft.mintEnd() + 1);
+        (uint256 deadline, bytes memory sig) = _sig();
         vm.prank(minter);
         vm.expectRevert("mint window closed");
-        nft.mintFree(MINTER_NONCE);
+        nft.mintFree(MINTER_NONCE, deadline, sig);
     }
 
     function testFinalizeTimeLocked() public {
@@ -108,9 +185,10 @@ contract BitForgeTest is Test {
         vm.warp(nft.mintEnd() + 1);
         nft.finalize();
         assertTrue(nft.finalized());
+        (uint256 deadline, bytes memory sig) = _sig();
         vm.prank(minter);
         vm.expectRevert("mint closed");
-        nft.mintFree(MINTER_NONCE);
+        nft.mintFree(MINTER_NONCE, deadline, sig);
     }
 
     // ---- metadata ----
@@ -139,21 +217,24 @@ contract BitForgeTest is Test {
         personal[2] = personal3;
         // zero treasury
         vm.expectRevert("zero treasury");
-        new BitForge("BitForge", "BTFG", BASE, address(0), personal, SEED);
+        new BitForge("BitForge", "BTFG", BASE, address(0), personal, SEED, signer);
+        // zero mint signer
+        vm.expectRevert("zero mint signer");
+        new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED, address(0));
         // dup personal wallet
         personal[2] = personal1;
         vm.expectRevert("dup personal wallet");
-        new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED);
+        new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED, signer);
         // personal == treasury
         personal[2] = treasury;
         vm.expectRevert("personal == treasury");
-        new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED);
+        new BitForge("BitForge", "BTFG", BASE, treasury, personal, SEED, signer);
         // too few personal wallets
         address[] memory two = new address[](2);
         two[0] = personal1;
         two[1] = personal2;
         vm.expectRevert("need 3-5 personal wallets");
-        new BitForge("BitForge", "BTFG", BASE, treasury, two, SEED);
+        new BitForge("BitForge", "BTFG", BASE, treasury, two, SEED, signer);
     }
 
     // ---- creator fee 5% enforced (ERC-2981 + operator allowlist) ----

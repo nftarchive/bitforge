@@ -13,7 +13,8 @@ import "../src/BitForge.sol";
 ///           PROJECT_NAME, PROJECT_SYMBOL, BASE_URI (repo Pages metadata URL,
 ///           e.g. https://nftarchive.github.io/bitforge/metadata/),
 ///           TREASURY, PERSONAL_WALLET_1, PERSONAL_WALLET_2,
-///           PERSONAL_WALLET_3, PUZZLE_SEED (bytes32(0) = random at deploy).
+///           PERSONAL_WALLET_3, PUZZLE_SEED (bytes32(0) = random at deploy),
+///           MINT_SIGNER (X-gate signer address — the Worker key, public part).
 ///         OPTIONAL: PERSONAL_WALLET_4, PERSONAL_WALLET_5 (3-5 personal
 ///         wallets total; the 31 personal NFTs split round-robin across them).
 ///
@@ -30,6 +31,7 @@ contract DeployBitForge is Script {
         string memory baseURI = vm.envString("BASE_URI");
         address treasury = vm.envAddress("TREASURY");
         bytes32 puzzleSeed = vm.envBytes32("PUZZLE_SEED");
+        address mintSigner = vm.envAddress("MINT_SIGNER");
 
         address[] memory personal = new address[](5);
         uint256 nPersonal = 0;
@@ -46,6 +48,7 @@ contract DeployBitForge is Script {
         console.log("Chain ID:", block.chainid);
         console.log("Gas token: ETH (Robinhood Chain native)");
         require(treasury != address(0), "ABORT: zero treasury");
+        require(mintSigner != address(0), "ABORT: zero mint signer");
         require(nPersonal >= 3 && nPersonal <= 5, "ABORT: need 3-5 personal wallets");
         for (uint256 i = 0; i < nPersonal; i++) {
             require(personal[i] != address(0), "ABORT: zero personal wallet");
@@ -60,11 +63,12 @@ contract DeployBitForge is Script {
 
         vm.startBroadcast();
         BitForge nft = new BitForge(
-            projectName, projectSymbol, baseURI, treasury, personalWallets, puzzleSeed
+            projectName, projectSymbol, baseURI, treasury, personalWallets, puzzleSeed, mintSigner
         );
         vm.stopBroadcast();
 
         console.log("BitForge:", address(nft));
+        console.log("mintSigner (X-gate):", nft.mintSigner());
         console.log("mintStart:", nft.mintStart());
         console.log("mintEnd:", nft.mintEnd());
         console.log("totalSupply (team pre-mints):", nft.totalSupply());
