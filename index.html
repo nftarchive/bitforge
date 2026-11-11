@@ -74,9 +74,9 @@
   .steps-tree .step:not(.locked) .node { background:var(--gold); border-color:var(--gold); }
   .steps-tree .step.done .node { background:var(--green); border-color:var(--green); }
   /* siku: garis vertikal turun dari parent, lalu menekuk ke node sendiri */
-  .steps-tree .step::before { content:""; position:absolute; left:calc(var(--px,6px) - 1px); top:0; width:calc(var(--nx,6px) - var(--px,6px) + 1px); height:26px; border-left:2px solid var(--gold); border-bottom:2px solid var(--gold); opacity:.55; }
+  .steps-tree .step::before { content:""; position:absolute; left:calc(var(--px,6px) - 1px); top:0; width:calc(var(--nx,6px) - var(--px,6px) + 1px); height:26px; border-left:2px solid #fff; border-bottom:2px solid #fff; opacity:.55; }
   /* garis vertikal turun dari node ke step berikutnya */
-  .steps-tree .step::after { content:""; position:absolute; left:calc(var(--nx,6px) - 1px); top:26px; bottom:0; width:2px; background:var(--gold); opacity:.55; }
+  .steps-tree .step::after { content:""; position:absolute; left:calc(var(--nx,6px) - 1px); top:26px; bottom:0; width:2px; background:#fff; opacity:.55; }
   #step1::before { display:none; } /* step pertama: nggak ada parent */
   #sessTerm::after { display:none; } /* output: garis berhenti di node terakhir */
   button { background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:0; padding:8px 14px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px; }
