@@ -123,6 +123,7 @@
     <h2><span class="n">$ 1.</span> Connect wallet</h2>
     <p>Robinhood Chain (4663). Gas is paid in ETH. One free mint per wallet.</p>
     <button id="btnConnect">[ Connect wallet ]</button>
+    <button id="btnDisconnect" class="hidden">[ Disconnect ]</button>
     <p class="mono" id="walletLine"></p>
   </div>
 
@@ -320,6 +321,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       tlog(okLine("connected: " + shortAddr(state.wallet) + " (Robinhood Chain)"));
       $("btnConnect").disabled = true;
       $("btnConnect").textContent = "[ Connected ]";
+      $("btnDisconnect").classList.remove("hidden");
       checkUnlock();
       // If this wallet already minted, say so.
       if (CONFIG.CONTRACT !== "0x0000000000000000000000000000000000000000") {
@@ -333,6 +335,16 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     }).catch(function (e) {
       $("walletLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
     });
+  });
+
+  $("btnDisconnect").addEventListener("click", function () {
+    state.wallet = null;
+    sessionStorage.removeItem("bf_wallet");
+    $("walletLine").innerHTML = "";
+    $("btnConnect").disabled = false;
+    $("btnConnect").textContent = "[ Connect wallet ]";
+    $("btnDisconnect").classList.add("hidden");
+    checkUnlock();
   });
 
   function switchChain() {
@@ -467,6 +479,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
         $("walletLine").innerHTML = '$ connect wallet<br>' + okLine("connected: " + shortAddr(state.wallet) + " (Robinhood Chain)");
         $("btnConnect").disabled = true;
         $("btnConnect").textContent = "[ Connected ]";
+        $("btnDisconnect").classList.remove("hidden");
         checkUnlock();
       }).catch(function () {});
     }
