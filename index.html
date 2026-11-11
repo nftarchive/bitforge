@@ -288,9 +288,12 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // tokenId = totalMinted (token di-mint berurutan, jadi token terakhir = totalMinted).
   var RMAX = [2035, 730, 313, 53];
   var RCLS = ["rar-0", "rar-1", "rar-2", "rar-3"];
-  function showMinted() {
-    rpcUint(SEL.totalMinted).then(function (tokenId) {
-      var id = Number(tokenId);
+  // tokenId diambil dari event Minted di receipt transaksi sendiri — BUKAN
+  // totalMinted saat ini. Kalau ada orang lain yang mint duluan di sela-sela,
+  // totalMinted sudah maju dan yang tampil malah NFT orang itu.
+  var MINTED_SIG = "0xa8637f389ea4bf747cb5f69479b1655cc2cec0b272d1e8f4fa9bc67d4d3e5c4a"; // Minted(address,uint256,uint8,uint256,bool)
+  function showMinted(txHash) {
+    function render(id) {
       return Promise.all([
         rpcUint(SEL.tokenRarity + hexPad32(id)),
         rpcUint(SEL.tokenSerial + hexPad32(id))
@@ -303,10 +306,30 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
           'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
         tlog('minted: BitForge #' + id + ' (' + serial + '/' + RMAX[r] + ')');
       });
-    }).catch(function () {
+    }
+    function fallbackLink() {
       $("mintedBox").classList.remove("hidden");
       $("mintedBox").innerHTML = 'Trade it on <a href="https://opensea.io/assets/robinhood/' + CONFIG.CONTRACT + '" target="_blank" rel="noopener">OpenSea</a> once it indexes.';
-    });
+    }
+    function fromTotalMinted() {
+      return rpcUint(SEL.totalMinted).then(function (tokenId) { return render(Number(tokenId)); });
+    }
+    if (!txHash) return fromTotalMinted().catch(fallbackLink);
+    return fetch(CONFIG.RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 3, method: "eth_getTransactionReceipt", params: [txHash] })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      var logs = (j.result && j.result.logs) || [];
+      var mine = null;
+      for (var i = 0; i < logs.length; i++) {
+        var l = logs[i];
+        if (l.address && l.address.toLowerCase() === CONFIG.CONTRACT.toLowerCase() &&
+            l.topics && l.topics[0] && l.topics[0].toLowerCase() === MINTED_SIG && l.topics.length > 2) { mine = l; break; }
+      }
+      if (!mine) return fromTotalMinted();
+      return render(Number(BigInt(mine.topics[2])));
+    }).catch(function () { return fromTotalMinted(); }).catch(fallbackLink);
   }
 
   function refreshStats() {
@@ -644,6 +667,13 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     return chunk();
   }
 
+  // Kalau mint gagal (revert), nonce lama hangus (puzzle bisa saja rotate) —
+  // buka lagi tombol Solve supaya user bisa solve ulang tanpa reload halaman.
+  function resetNonce() {
+    state.nonce = null;
+    checkUnlock();
+  }
+
   // ---- mint ----
   $("btnMint").addEventListener("click", function () {
     if (!state.wallet || state.nonce === null) return;
@@ -655,21 +685,25 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       method: "eth_sendTransaction",
       params: [{ from: state.wallet, to: CONFIG.CONTRACT, value: "0x0", data: data }]
     }).then(function (txHash) {
+      state.txHash = txHash;
       $("mintLine").innerHTML = 'tx: <a href="' + CONFIG.EXPLORER + "/tx/" + txHash + '" target="_blank" rel="noopener">' + txHash + "</a>";
       tlog("tx sent: " + txHash);
       return waitTx(txHash);
     }).then(function (ok) {
       if (ok === null) { $("mintLine").innerHTML = '<span class="warn">Still confirming after 5 min — check the explorer link above.</span>'; tlog('<span class="warn">confirming… check explorer</span>'); $("btnMint").disabled = false; return; }
-      if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; tlog('<span class="warn">failed</span>'); $("btnMint").disabled = false; return; }
+      if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; tlog('<span class="warn">failed</span>'); $("btnMint").disabled = false; resetNonce(); return; }
       $("mintLine").innerHTML = okLine("minted! check your wallet.");
       tlog(okLine("minted!"));
       state.minted = true;
       updateLocks();
-      showMinted();
+      showMinted(state.txHash);
       refreshStats();
     }).catch(function (e) {
       $("btnMint").disabled = false;
       $("mintLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
+      // user menolak di wallet (4001) = nonce masih valid, bisa klik Mint lagi.
+      // error lain = nonce dianggap hangus, buka lagi tombol Solve.
+      if (!e || e.code !== 4001) resetNonce();
     });
   });
 
