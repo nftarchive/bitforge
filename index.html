@@ -309,6 +309,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     }
     window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accs) {
       state.wallet = accs[0];
+      sessionStorage.setItem("bf_wallet", accs[0]); // biar nempel pas halaman reload (redirect OAuth X)
       return window.ethereum.request({ method: "eth_chainId" }).then(function (cid) {
         if (parseInt(cid, 16) !== CONFIG.CHAIN_ID) return switchChain();
         return cid;
@@ -452,6 +453,25 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     X.connected = true;
     showXConnected();
     enableTasks();
+  })();
+  // pulihkan wallet setelah redirect OAuth (halaman reload) — tanpa prompt
+  (function restoreWallet() {
+    var saved = sessionStorage.getItem("bf_wallet");
+    if (!saved) return;
+    function tryRestore() {
+      if (!hasWallet()) return;
+      window.ethereum.request({ method: "eth_accounts" }).then(function (accs) {
+        var addr = (accs || []).find(function (a) { return a.toLowerCase() === saved.toLowerCase(); });
+        if (!addr) { sessionStorage.removeItem("bf_wallet"); return; }
+        state.wallet = addr;
+        $("walletLine").innerHTML = '$ connect wallet<br>' + okLine("connected: " + shortAddr(state.wallet) + " (Robinhood Chain)");
+        $("btnConnect").disabled = true;
+        $("btnConnect").textContent = "[ Connected ]";
+        checkUnlock();
+      }).catch(function () {});
+    }
+    if (hasWallet()) tryRestore();
+    else setTimeout(tryRestore, 800); // wallet kadang inject-nya telat
   })();
 
   function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
