@@ -324,14 +324,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       $("btnDisconnect").classList.remove("hidden");
       checkUnlock();
       // If this wallet already minted, say so.
-      if (CONFIG.CONTRACT !== "0x0000000000000000000000000000000000000000") {
-        rpcCall(SEL.freeMintedBy + addrPad(state.wallet)).then(function (hex) {
-          if (BigInt(hex) !== 0n) {
-            $("mintLine").innerHTML = '<span class="warn">This wallet already used its free mint.</span>';
-            $("btnMint").disabled = true;
-          }
-        }).catch(function () {});
-      }
+      checkAlreadyMinted();
     }).catch(function (e) {
       $("walletLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
     });
@@ -346,6 +339,17 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     $("btnDisconnect").classList.add("hidden");
     checkUnlock();
   });
+
+  // Kalau wallet ini sudah pakai free mint-nya, kasih tahu + kunci tombol Mint.
+  function checkAlreadyMinted() {
+    if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000" || !state.wallet) return;
+    rpcCall(SEL.freeMintedBy + addrPad(state.wallet)).then(function (hex) {
+      if (BigInt(hex) !== 0n) {
+        $("mintLine").innerHTML = '<span class="warn">This wallet already used its free mint.</span>';
+        $("btnMint").disabled = true;
+      }
+    }).catch(function () {});
+  }
 
   function switchChain() {
     return window.ethereum.request({
@@ -481,6 +485,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
         $("btnConnect").textContent = "[ Connected ]";
         $("btnDisconnect").classList.remove("hidden");
         checkUnlock();
+        checkAlreadyMinted();
       }).catch(function () {});
     }
     if (hasWallet()) tryRestore();
