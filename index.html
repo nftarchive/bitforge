@@ -67,6 +67,14 @@
   .step h2 { margin:0 0 8px; font-size:16px; }
   .step h2 .n { color:var(--gold); }
   .step p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.5; }
+  /* tree steps ala forks.wiki: garis vertikal + node, tiap step makin masuk */
+  .steps-tree { position:relative; margin:18px 0 0; }
+  .steps-tree::before { content:""; position:absolute; left:5px; top:26px; bottom:26px; width:2px; background:var(--gold); opacity:.55; }
+  .steps-tree .step { position:relative; border-top:0; padding:16px 0 16px var(--ind,28px); }
+  .steps-tree .step .node { position:absolute; left:0; top:20px; width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:var(--bg); z-index:1; }
+  .steps-tree .step:not(.locked) .node { background:var(--gold); border-color:var(--gold); }
+  .steps-tree .step.done .node { background:var(--green); border-color:var(--green); }
+  .steps-tree .step::after { content:""; position:absolute; left:12px; top:25px; width:calc(var(--ind,28px) - 12px); height:2px; background:var(--gold); opacity:.55; }
   button { background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:0; padding:8px 14px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px; }
   button:disabled { background:transparent; border-color:#333; color:#666; cursor:not-allowed; }
   .task { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid #262626; }
@@ -123,7 +131,9 @@
     <p>The contract is not deployed yet. Come back when the mint opens.</p>
   </div>
 
-  <div class="step" id="step1">
+  <div class="steps-tree">
+  <div class="step" id="step1" style="--ind:28px">
+    <span class="node"></span>
     <h2><span class="n">$ 1.</span> Connect wallet</h2>
     <p>Robinhood Chain (4663). Gas is paid in ETH. One free mint per wallet.</p>
     <button id="btnConnect">[ Connect wallet ]</button>
@@ -131,14 +141,16 @@
     <p class="mono" id="walletLine"></p>
   </div>
 
-  <div class="step" id="step2">
+  <div class="step" id="step2" style="--ind:44px">
+    <span class="node"></span>
     <h2><span class="n">$ 2.</span> Connect X <span class="lock" id="lock2">🔒</span></h2>
     <p>Connect with your X account to continue &mdash; a login check on top of the puzzle.</p>
     <button id="btnConnectX">[ Connect X ]</button>
     <p class="mono" id="xLine"></p>
   </div>
 
-  <div class="step" id="step3">
+  <div class="step" id="step3" style="--ind:60px">
+    <span class="node"></span>
     <h2><span class="n">$ 3.</span> X tasks <span class="lock" id="lock3">🔒</span></h2>
     <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
     <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
@@ -149,7 +161,8 @@
     <div class="taskout mono" id="out-t3"></div>
   </div>
 
-  <div class="step" id="step4">
+  <div class="step" id="step4" style="--ind:76px">
+    <span class="node"></span>
     <h2><span class="n">$ 4.</span> Solve the puzzle <span class="lock" id="lock4">🔒</span></h2>
     <p>Your browser solves it automatically &mdash; just wait. The puzzle proves you&rsquo;re not a bot.</p>
     <button id="btnSolve" disabled>[ Solve puzzle ]</button>
@@ -157,7 +170,8 @@
     <p class="mono" id="solveLine"><span class="mut">Locked &mdash; finish steps 1&ndash;3 first.</span></p>
   </div>
 
-  <div class="step" id="step5">
+  <div class="step" id="step5" style="--ind:92px">
+    <span class="node"></span>
     <h2><span class="n">$ 5.</span> Mint &mdash; free <span class="lock" id="lock5">🔒</span></h2>
     <p>Price: 0. You only pay gas (ETH). Your robot&rsquo;s rarity is revealed instantly.</p>
     <button id="btnMint" disabled>[ Mint free ]</button>
@@ -165,9 +179,11 @@
     <p class="mono hidden" id="mintedBox"></p>
   </div>
 
-  <div class="step" id="sessTerm">
+  <div class="step" id="sessTerm" style="--ind:92px">
+    <span class="node"></span>
     <h2><span class="n">#</span> output</h2>
     <div class="termbody" id="sessLog"><span class="cmt"># session log &mdash; every step prints here</span></div>
+  </div>
   </div>
 
   <p class="foot">
@@ -529,10 +545,15 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     var el = $("lock" + n);
     if (el) el.textContent = st === "locked" ? "🔒" : st === "done" ? "✅" : "";
     var step = $("step" + n);
-    if (step) step.classList.toggle("locked", st === "locked");
+    if (step) {
+      step.classList.toggle("locked", st === "locked");
+      step.classList.toggle("done", st === "done");
+    }
   }
   function updateLocks() {
     var hasW = !!state.wallet;
+    var s1 = $("step1");
+    if (s1) s1.classList.toggle("done", hasW); // node step 1 hijau kalau wallet udah connect
     var xDone = X.connected || !xGateOn(); // gate mati = step 2 diskip
     var tDone = tasksDone();
     var pDone = state.nonce !== null;
