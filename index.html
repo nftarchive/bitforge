@@ -303,12 +303,30 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // ---- wallet ----
   function hasWallet() { return typeof window.ethereum !== "undefined"; }
 
+  // Minta akun lewat wallet_requestPermissions (EIP-2255) supaya wallet SELALU
+  // menampilkan pemilih akun — user bisa ganti wallet. eth_requestAccounts saja
+  // tidak menampilkan picker kalau situs sudah pernah diizinkan (langsung
+  // nyambung wallet lama). Fallback ke eth_requestAccounts kalau tidak didukung.
+  function requestAccounts() {
+    return window.ethereum.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] })
+      .then(function (perms) {
+        var p = (perms || []).find(function (x) { return x.parentCapability === "eth_accounts"; });
+        var accs = p && p.caveats && p.caveats[0] && p.caveats[0].value;
+        if (accs && accs.length) return accs;
+        return window.ethereum.request({ method: "eth_requestAccounts" });
+      })
+      .catch(function (e) {
+        if (e && e.code === 4001) throw e; // user menolak — jangan prompt lagi
+        return window.ethereum.request({ method: "eth_requestAccounts" });
+      });
+  }
+
   $("btnConnect").addEventListener("click", function () {
     if (!hasWallet()) {
       $("walletLine").innerHTML = '<span class="warn">No wallet found. Install MetaMask or another EVM wallet, then reload.</span>';
       return;
     }
-    window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accs) {
+    requestAccounts().then(function (accs) {
       state.wallet = accs[0];
       sessionStorage.setItem("bf_wallet", accs[0]); // biar nempel pas halaman reload (redirect OAuth X)
       return window.ethereum.request({ method: "eth_chainId" }).then(function (cid) {
