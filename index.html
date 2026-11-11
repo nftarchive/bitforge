@@ -224,7 +224,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // Function selectors (verified against BitForge.sol with `cast sig`).
   var SEL = {
     seedFor: "0x8d3730fb",       // seedFor(address)
-    tierBits: "0x329a00ec",      // tierBits()
+    tierBits: "0x329a00ec",      // tierBits() -> flat PUZZLE_BITS (20)
     freeMinted: "0xd10a1a2b",    // freeMinted()
     totalMinted: "0xa2309ff8",   // totalMinted()
     freeMintedBy: "0xdd4d2233",  // freeMintedBy(address)
@@ -232,10 +232,10 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     freeRemaining: "0x5a781a6b", // freeRemaining()
     tokenRarity: "0xafb0a369",   // tokenRarity(uint256) -> 0 common, 1 rare, 2 epic, 3 legendary
     tokenSerial: "0x9b3ee2c3",   // tokenSerial(uint256) -> nomor dalam tier
-    mintFree: "0xa4146733"       // mintFree(uint256)
+    mintFree: "0xc6d8ef78"       // mintFree(uint256 nonce, uint256 deadline, bytes signature)
   };
 
-  var state = { wallet: null, seed: null, bits: 18, nonce: null, solving: false, stopSolve: false, minted: false };
+  var state = { wallet: null, seed: null, bits: 20, nonce: null, solving: false, stopSolve: false, minted: false, signature: null, deadline: 0 };
 
   function $(id) { return document.getElementById(id); }
   function shortAddr(a) { return a.slice(0, 6) + "&hellip;" + a.slice(-4); }
@@ -285,12 +285,12 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   }
 
   // ---- hasil mint: nomor NFT + nomor rarity (warna ala OpenSea) ----
-  // tokenId = totalMinted (token di-mint berurutan, jadi token terakhir = totalMinted).
+  // tokenId = totalMinted (tokens mint in order, so the latest token = totalMinted).
   var RMAX = [2035, 730, 313, 53];
   var RCLS = ["rar-0", "rar-1", "rar-2", "rar-3"];
-  // tokenId diambil dari event Minted di receipt transaksi sendiri — BUKAN
-  // totalMinted saat ini. Kalau ada orang lain yang mint duluan di sela-sela,
-  // totalMinted sudah maju dan yang tampil malah NFT orang itu.
+  // tokenId is taken from the Minted event in the user's own tx receipt — NOT
+  // the current totalMinted. If someone else mints in between,
+  // totalMinted has already moved on and the wrong NFT would show.
   var MINTED_SIG = "0xa8637f389ea4bf747cb5f69479b1655cc2cec0b272d1e8f4fa9bc67d4d3e5c4a"; // Minted(address,uint256,uint8,uint256,bool)
   function showMinted(txHash) {
     function render(id) {
@@ -350,10 +350,10 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // ---- wallet ----
   function hasWallet() { return typeof window.ethereum !== "undefined"; }
 
-  // Minta akun lewat wallet_requestPermissions (EIP-2255) supaya wallet SELALU
-  // menampilkan pemilih akun — user bisa ganti wallet. eth_requestAccounts saja
-  // tidak menampilkan picker kalau situs sudah pernah diizinkan (langsung
-  // nyambung wallet lama). Fallback ke eth_requestAccounts kalau tidak didukung.
+  // Request accounts via wallet_requestPermissions (EIP-2255) so the wallet ALWAYS
+  // shows the account picker — the user can switch wallets. eth_requestAccounts
+  // alone does NOT show the picker if the site was already authorized (it just
+  // reconnects the old wallet). Fallback to eth_requestAccounts if unsupported.
   function requestAccounts() {
     return window.ethereum.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] })
       .then(function (perms) {
@@ -398,10 +398,10 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   $("btnDisconnect").addEventListener("click", function () {
     state.wallet = null;
     sessionStorage.removeItem("bf_wallet");
-    // Minta wallet cabut izin situs (wallet_revokePermissions, best-effort —
-    // tidak semua wallet dukung; kalau tidak dukung, diabaikan). Tanpa ini,
-    // Rabby tetap menganggap situs sudah diizinkan dan Connect berikutnya
-    // langsung nyambung wallet lama tanpa menampilkan pemilih akun.
+    // Ask the wallet to revoke the site's permission (wallet_revokePermissions,
+    // best-effort — not all wallets support it; if unsupported, it is ignored).
+    // Without this, Rabby still treats the site as authorized and the next
+    // Connect would reconnect the old wallet without showing the picker.
     if (hasWallet()) {
       window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }).catch(function () {});
     }
@@ -412,7 +412,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     checkUnlock();
   });
 
-  // Kalau wallet ini sudah pakai free mint-nya, kasih tahu + kunci tombol Mint.
+  // If this wallet already used its free mint, say so + lock the Mint button.
   function checkAlreadyMinted() {
     if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000" || !state.wallet) return;
     rpcCall(SEL.freeMintedBy + addrPad(state.wallet)).then(function (hex) {
@@ -460,14 +460,26 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     });
   });
   // ---- Connect X (OAuth 2.0 + PKCE, via Cloudflare Worker) ----
-  // X API tidak mengizinkan panggilan langsung dari browser (tanpa header CORS),
-  // jadi tukar kode -> token dilakukan lewat Worker (server). Worker TIDAK
-  // memanggil /2/users/me (biaya $0.01/user) — login saja yang diverifikasi,
-  // username + umur akun tidak dicek (tanpa panggilan data API; $0-nya masih
-  // perlu dites live begitu Worker dipasang).
+  // The X API does not allow direct calls from the browser (no CORS headers),
+  // so the code -> token exchange goes through the Worker (server). The Worker
+  // does NOT call /2/users/me ($0.01/user) — only the login itself is verified,
+  // username + account age are not checked (no data API calls; the $0 cost
+  // still needs a live test once the Worker is deployed).
   var X = { configured: !!(CONFIG.X_CLIENT_ID && CONFIG.X_WORKER_URL), connected: false };
   function xGateOn() { return X.configured; }
   function xOk() { return !xGateOn() || X.connected; }
+  // The X signature ("cap") must exist and not be expired. Without it the
+  // contract reverts, so the Mint button stays locked until it is valid.
+  function hasValidSig() {
+    return !!state.signature && state.deadline > 0 && state.deadline * 1000 > Date.now();
+  }
+  // ABI-encode bytes for calldata: 32-byte length + data padded to 32 bytes.
+  function abiBytes(hex) {
+    var h = hex.replace(/^0x/, "");
+    var len = h.length / 2;
+    var padded = h + "0".repeat((64 - (h.length % 64)) % 64);
+    return hexPad32(len) + padded;
+  }
   function enableTasks() { ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = false; }); }
   function b64url(buf) {
     var bytes = new Uint8Array(buf), s = "";
@@ -504,7 +516,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       window.location.href = auth;
     });
   });
-  // kembalian dari X: ?code=...&state=... -> verifikasi lewat Worker
+  // return from X: ?code=...&state=... -> verify via the Worker
   (function handleXCallback() {
     var q = new URLSearchParams(window.location.search);
     var code = q.get("code");
@@ -519,14 +531,18 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     fetch(CONFIG.X_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI })
+      body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI, wallet: state.wallet, contract: CONFIG.CONTRACT, chain_id: CONFIG.CHAIN_ID })
     }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d.error || !d.connected) {
+      if (d.error || !d.connected || !d.signature || !d.deadline) {
         $("xLine").innerHTML = '<span class="warn">X login failed: ' + (d.error || "unknown") + '. Try again.</span>';
         return;
       }
       X.connected = true;
+      state.signature = d.signature;
+      state.deadline = Number(d.deadline);
       sessionStorage.setItem("bf_x_connected", "1");
+      sessionStorage.setItem("bf_x_sig", d.signature);
+      sessionStorage.setItem("bf_x_deadline", String(d.deadline));
       showXConnected();
       tlog('<span class="ok">X connected</span>');
       enableTasks();
@@ -535,10 +551,21 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       $("xLine").innerHTML = '<span class="warn">Could not verify your X account. Try again.</span>';
     });
   })();
-  // pulihkan sesi X setelah refresh
+  // restore the X session after refresh (including the signature, if not expired)
   (function restoreX() {
     if (sessionStorage.getItem("bf_x_connected") !== "1") return;
+    var sig = sessionStorage.getItem("bf_x_sig");
+    var dl = Number(sessionStorage.getItem("bf_x_deadline") || "0");
+    if (!sig || !dl || dl * 1000 <= Date.now()) {
+      // signature missing / expired: the user must Connect X again.
+      sessionStorage.removeItem("bf_x_connected");
+      sessionStorage.removeItem("bf_x_sig");
+      sessionStorage.removeItem("bf_x_deadline");
+      return;
+    }
     X.connected = true;
+    state.signature = sig;
+    state.deadline = dl;
     showXConnected();
     enableTasks();
     checkUnlock();
@@ -566,7 +593,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   })();
 
   function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
-  // ---- kunci step-by-step: step berikutnya baru kebuka kalau step sebelumnya beres ----
+  // ---- step-by-step locks: the next step only unlocks once the previous one is done ----
   // 🔒 = terkunci, (kosong) = step aktif, ✅ = beres.
   function setLock(n, st) {
     var el = $("lock" + n);
@@ -588,7 +615,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     setLock(3, !(hasW && xDone) ? "locked" : (tDone ? "done" : "open"));
     setLock(4, !(hasW && xDone && tDone) ? "locked" : (pDone ? "done" : "open"));
     setLock(5, !pDone ? "locked" : (state.minted ? "done" : "open"));
-    // kunci kontrolnya juga, bukan cuma ikon
+    // lock the controls too, not just the icons
     if (xGateOn()) $("btnConnectX").disabled = !hasW || X.connected;
     ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = !(hasW && xDone); });
   }
@@ -601,13 +628,17 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     $("solveLine").innerHTML = ready
       ? (state.nonce !== null ? '<span class="ok">&#10003; solved! nonce: ' + state.nonce + '</span>' : "Ready — press Solve puzzle.")
       : '<span class="mut">Locked &mdash; ' + locked + '.</span>';
-    if (ready && state.nonce !== null) $("btnMint").disabled = false;
+    if (ready && state.nonce !== null) $("btnMint").disabled = !hasValidSig();
     updateLocks();
+    // Auto-solve: once the user finishes the X tasks, the anti-bot check
+    // starts by itself — no extra click, no confusion. The Solve button
+    // stays as a manual fallback.
+    if (ready && state.nonce === null && !state.solving) startSolve();
   }
 
   // ---- PoW solver (SHA-256, matches BitForge.sol exactly) ----
   // preimage = SHA-256( hex(seed) + ":" + decimal(nonce) ), hex(seed) is 64 lowercase chars, no 0x.
-  $("btnSolve").addEventListener("click", function () {
+  function startSolve() {
     if (state.solving || !state.wallet) return;
     if (CONFIG.CONTRACT === "0x0000000000000000000000000000000000000000") {
       $("solveLine").innerHTML = '<span class="warn">Contract not deployed yet.</span>';
@@ -615,7 +646,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     }
     state.solving = true;
     $("btnSolve").disabled = true;
-    $("solveLine").innerHTML = "$ solve puzzle";
+    $("solveLine").textContent = "Checking anti-bot, please wait a moment...";
     tlog("$ solve puzzle");
     rpcCall(SEL.seedFor + addrPad(state.wallet)).then(function (seedHex) {
       state.seed = seedHex.replace(/^0x/, "");
@@ -623,7 +654,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     }).then(function (bits) {
       state.bits = Number(bits);
       $("stTier").textContent = state.bits + " bits";
-      $("solveLine").textContent = "Solving… difficulty " + state.bits + " bits. Keep this tab open.";
+      $("solveLine").textContent = "Checking anti-bot, please wait a moment...";
       tlog("solving… difficulty " + state.bits + " bits");
       return solveLoop(0);
     }).then(function (found) {
@@ -632,14 +663,14 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       state.nonce = found;
       $("solveLine").innerHTML = okLine("solved! nonce: " + found);
       tlog(okLine("solved! nonce: " + found));
-      $("btnMint").disabled = false;
       checkUnlock();
     }).catch(function (e) {
       state.solving = false;
       $("btnSolve").disabled = false;
       $("solveLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
     });
-  });
+  }
+  $("btnSolve").addEventListener("click", startSolve);
 
   function solveLoop(startNonce) {
     var BATCH = 4000; // hashes per chunk, keeps the tab responsive
@@ -660,15 +691,15 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
         var pct = Math.min(99, Math.round(100 * (1 - Math.pow(0.5, tried / Math.pow(2, state.bits)))));
         var filled = Math.round(pct / 10);
         $("solveBar").textContent = "[" + "\u2588".repeat(filled) + "\u2591".repeat(10 - filled) + "] " + pct + "%";
-        $("solveLine").textContent = "Solving… " + tried.toLocaleString() + " tries, difficulty " + state.bits + " bits.";
+        $("solveLine").textContent = "Checking anti-bot, please wait a moment... " + tried.toLocaleString() + " tries.";
         return new Promise(function (res) { setTimeout(function () { res(chunk()); }, 0); });
       });
     }
     return chunk();
   }
 
-  // Kalau mint gagal (revert), nonce lama hangus (puzzle bisa saja rotate) —
-  // buka lagi tombol Solve supaya user bisa solve ulang tanpa reload halaman.
+  // If the mint fails (revert), the nonce may be stale — reopen Solve so the
+  // user can solve again without reloading the page.
   function resetNonce() {
     state.nonce = null;
     checkUnlock();
@@ -677,10 +708,16 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   // ---- mint ----
   $("btnMint").addEventListener("click", function () {
     if (!state.wallet || state.nonce === null) return;
+    if (!hasValidSig()) {
+      $("mintLine").innerHTML = '<span class="warn">Your X verification expired. Please reconnect X to get a fresh one.</span>';
+      return;
+    }
     $("btnMint").disabled = true;
     $("mintLine").innerHTML = "$ mint --free";
     tlog("$ mint --free");
-    var data = SEL.mintFree + hexPad32(state.nonce);
+    // mintFree(uint256 nonce, uint256 deadline, bytes signature):
+    // selector + nonce + deadline + offset(96) + ABI-encoded signature bytes.
+    var data = SEL.mintFree + hexPad32(state.nonce) + hexPad32(state.deadline) + hexPad32(96) + abiBytes(state.signature);
     window.ethereum.request({
       method: "eth_sendTransaction",
       params: [{ from: state.wallet, to: CONFIG.CONTRACT, value: "0x0", data: data }]
@@ -701,7 +738,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     }).catch(function (e) {
       $("btnMint").disabled = false;
       $("mintLine").innerHTML = '<span class="warn">' + (e && e.message ? e.message : e) + "</span>";
-      // user menolak di wallet (4001) = nonce masih valid, bisa klik Mint lagi.
+      // user rejected in the wallet (4001) = nonce still valid, can click Mint again.
       // error lain = nonce dianggap hangus, buka lagi tombol Solve.
       if (!e || e.code !== 4001) resetNonce();
     });
@@ -738,7 +775,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
         el.appendChild(s);
       });
     }
-    // tap = scatter (sama kayak animasi NFT), balik utuh 1,6 dtk kemudian
+    // tap = scatter (same as the NFT animation), reassembles 1.6s later
     function addScatter(el, maxDist) {
       var scattered = false;
       el.addEventListener("click", function () {
@@ -762,8 +799,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       buildRobot(hero, DATA.legendary_1, 20, 15);
       addScatter(hero, 220);
     }
-    // strip: 3 robots kecil, semuanya bisa diketuk (scatter juga)
-    // sel lebih kecil di layar sempit supaya ketiganya muat satu baris (360px)
+    // strip: 3 small robots, all tappable (scatter too)
+    // smaller cells on narrow screens so all three fit in one row (360px)
     var miniPx = window.innerWidth <= 380 ? 6 : 7;
     var strip = { common_2: "rCommon", rare_1: "rRare", epic_1: "rEpic" };
     Object.keys(strip).forEach(function (name) {
