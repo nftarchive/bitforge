@@ -23,6 +23,8 @@
   .badge { display:inline-block; font-size:11px; color:var(--muted); border:1px solid var(--border); border-radius:20px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
   .rh-badge { display:inline-block; border:1px solid var(--border); padding:2px; margin-left:8px; vertical-align:middle; line-height:0; }
   .rh-badge img { width:14px; height:14px; display:block; }
+  .step.locked { opacity:.5; }
+  .lock { font-size:14px; }
   .repometa { color:var(--muted); font-size:12px; margin-top:6px; }
   .repometa b { color:var(--text); }
 
@@ -130,14 +132,14 @@
   </div>
 
   <div class="step" id="step2">
-    <h2><span class="n">$ 2.</span> Connect X</h2>
+    <h2><span class="n">$ 2.</span> Connect X <span class="lock" id="lock2">🔒</span></h2>
     <p>Connect with your X account to continue &mdash; a login check on top of the puzzle.</p>
     <button id="btnConnectX">[ Connect X ]</button>
     <p class="mono" id="xLine"></p>
   </div>
 
   <div class="step" id="step3">
-    <h2><span class="n">$ 3.</span> X tasks</h2>
+    <h2><span class="n">$ 3.</span> X tasks <span class="lock" id="lock3">🔒</span></h2>
     <p>Do the tasks, tick each box. The puzzle unlocks when all three are done.</p>
     <div class="task"><input type="checkbox" id="t1"><label for="t1">Follow <a href="https://x.com/BitForge_hq" target="_blank" rel="noopener">@BitForge_hq</a> on X</label></div>
     <div class="taskout mono" id="out-t1"></div>
@@ -148,7 +150,7 @@
   </div>
 
   <div class="step" id="step4">
-    <h2><span class="n">$ 4.</span> Solve the puzzle</h2>
+    <h2><span class="n">$ 4.</span> Solve the puzzle <span class="lock" id="lock4">🔒</span></h2>
     <p>Your browser solves it automatically &mdash; just wait. The puzzle proves you&rsquo;re not a bot.</p>
     <button id="btnSolve" disabled>[ Solve puzzle ]</button>
     <p class="mono mut" id="solveBar"></p>
@@ -156,7 +158,7 @@
   </div>
 
   <div class="step" id="step5">
-    <h2><span class="n">$ 5.</span> Mint &mdash; free</h2>
+    <h2><span class="n">$ 5.</span> Mint &mdash; free <span class="lock" id="lock5">🔒</span></h2>
     <p>Price: 0. You only pay gas (ETH). Your robot&rsquo;s rarity is revealed instantly.</p>
     <button id="btnMint" disabled>[ Mint free ]</button>
     <p class="mono" id="mintLine"></p>
@@ -213,7 +215,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     mintFree: "0xa4146733"       // mintFree(uint256)
   };
 
-  var state = { wallet: null, seed: null, bits: 18, nonce: null, solving: false, stopSolve: false };
+  var state = { wallet: null, seed: null, bits: 18, nonce: null, solving: false, stopSolve: false, minted: false };
 
   function $(id) { return document.getElementById(id); }
   function shortAddr(a) { return a.slice(0, 6) + "&hellip;" + a.slice(-4); }
@@ -496,6 +498,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     X.connected = true;
     showXConnected();
     enableTasks();
+    checkUnlock();
   })();
   // pulihkan wallet setelah redirect OAuth (halaman reload) — tanpa prompt
   (function restoreWallet() {
@@ -520,6 +523,27 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   })();
 
   function tasksDone() { return $("t1").checked && $("t2").checked && $("t3").checked; }
+  // ---- kunci step-by-step: step berikutnya baru kebuka kalau step sebelumnya beres ----
+  // 🔒 = terkunci, (kosong) = step aktif, ✅ = beres.
+  function setLock(n, st) {
+    var el = $("lock" + n);
+    if (el) el.textContent = st === "locked" ? "🔒" : st === "done" ? "✅" : "";
+    var step = $("step" + n);
+    if (step) step.classList.toggle("locked", st === "locked");
+  }
+  function updateLocks() {
+    var hasW = !!state.wallet;
+    var xDone = X.connected || !xGateOn(); // gate mati = step 2 diskip
+    var tDone = tasksDone();
+    var pDone = state.nonce !== null;
+    setLock(2, !hasW ? "locked" : (xDone ? "done" : "open"));
+    setLock(3, !(hasW && xDone) ? "locked" : (tDone ? "done" : "open"));
+    setLock(4, !(hasW && xDone && tDone) ? "locked" : (pDone ? "done" : "open"));
+    setLock(5, !pDone ? "locked" : (state.minted ? "done" : "open"));
+    // kunci kontrolnya juga, bukan cuma ikon
+    if (xGateOn()) $("btnConnectX").disabled = !hasW || X.connected;
+    ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = !(hasW && xDone); });
+  }
   function checkUnlock() {
     var ready = !!state.wallet && xOk() && tasksDone();
     $("btnSolve").disabled = !ready || state.nonce !== null;
@@ -530,6 +554,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       ? (state.nonce !== null ? '<span class="ok">&#10003; solved! nonce: ' + state.nonce + '</span>' : "Ready — press Solve puzzle.")
       : '<span class="mut">Locked &mdash; ' + locked + '.</span>';
     if (ready && state.nonce !== null) $("btnMint").disabled = false;
+    updateLocks();
   }
 
   // ---- PoW solver (SHA-256, matches BitForge.sol exactly) ----
@@ -613,6 +638,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       if (!ok) { $("mintLine").innerHTML = '<span class="warn">Transaction failed or reverted. No NFT minted, only gas was spent.</span>'; tlog('<span class="warn">failed</span>'); $("btnMint").disabled = false; return; }
       $("mintLine").innerHTML = okLine("minted! check your wallet.");
       tlog(okLine("minted!"));
+      state.minted = true;
+      updateLocks();
       showMinted();
       refreshStats();
     }).catch(function (e) {
@@ -707,6 +734,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   }
   refreshStats();
   setInterval(refreshStats, 30000);
+  updateLocks(); // awal: cuma step 1 yang kebuka, sisanya 🔒
 })();
 </script>
 <script>
