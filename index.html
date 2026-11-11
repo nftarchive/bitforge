@@ -128,7 +128,7 @@
 
   <div class="step" id="step2">
     <h2><span class="n">$ 2.</span> Connect X</h2>
-    <p>One X account per wallet &mdash; this stops bot farms. Your X account must be at least <span id="minAgeLabel">30</span> days old.</p>
+    <p>One X account per wallet &mdash; this stops bot farms. Connect with your X account to continue.</p>
     <button id="btnConnectX">[ Connect X ]</button>
     <p class="mono" id="xLine"></p>
   </div>
@@ -194,7 +194,6 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     X_CLIENT_ID: "", // TODO: Client ID aplikasi X (developer.x.com) — isi pas deploy
     X_WORKER_URL: "", // TODO: URL Cloudflare Worker (tukar kode OAuth -> token) — isi pas deploy
     X_REDIRECT_URI: "https://nftarchive.github.io/bitforge/",
-    MIN_X_AGE_DAYS: 30, // akun X minimal 30 hari (filter bot)
   };
 
   // Function selectors (verified against BitForge.sol with `cast sig`).
@@ -373,11 +372,12 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   });
   // ---- Connect X (OAuth 2.0 + PKCE, via Cloudflare Worker) ----
   // X API tidak mengizinkan panggilan langsung dari browser (tanpa header CORS),
-  // jadi tukar kode -> token + baca /2/users/me dilakukan lewat Worker (server).
-  var X = { configured: !!(CONFIG.X_CLIENT_ID && CONFIG.X_WORKER_URL), connected: false, username: null, ageDays: null };
-  function xAgeOk() { return X.ageDays !== null && X.ageDays >= CONFIG.MIN_X_AGE_DAYS; }
+  // jadi tukar kode -> token dilakukan lewat Worker (server). Worker TIDAK
+  // memanggil /2/users/me (biaya $0.01/user) — login saja yang diverifikasi,
+  // username + umur akun tidak dicek (gratis, $0).
+  var X = { configured: !!(CONFIG.X_CLIENT_ID && CONFIG.X_WORKER_URL), connected: false };
   function xGateOn() { return X.configured; }
-  function xOk() { return !xGateOn() || (X.connected && xAgeOk()); }
+  function xOk() { return !xGateOn() || X.connected; }
   function enableTasks() { ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = false; }); }
   function b64url(buf) {
     var bytes = new Uint8Array(buf), s = "";
@@ -395,8 +395,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   }
   function showXConnected() {
     $("btnConnectX").disabled = true;
-    $("btnConnectX").textContent = "[ @" + X.username + " ]";
-    $("xLine").innerHTML = '<span class="ok">&#10003;</span> @' + X.username + ' &middot; ' + X.ageDays + ' days old &middot; 1 X = 1 wallet';
+    $("btnConnectX").textContent = "[ X connected ]";
+    $("xLine").innerHTML = '<span class="ok">&#10003;</span> X connected &middot; 1 X = 1 wallet';
   }
   $("btnConnectX").addEventListener("click", function () {
     if (!X.configured) { $("xLine").innerHTML = '<span class="warn">X connect opens when mint opens.</span>'; return; }
@@ -431,22 +431,14 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI })
     }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d.error || !d.username || !d.created_at) {
+      if (d.error || !d.connected) {
         $("xLine").innerHTML = '<span class="warn">X login failed: ' + (d.error || "unknown") + '. Try again.</span>';
         return;
       }
-      X.ageDays = Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000);
-      X.username = d.username;
-      if (!xAgeOk()) {
-        $("xLine").innerHTML = '<span class="warn">Account @' + d.username + ' is only ' + X.ageDays + ' days old &mdash; minimum ' + CONFIG.MIN_X_AGE_DAYS + ' days.</span>';
-        tlog('<span class="warn">X too new: @' + d.username + ' (' + X.ageDays + 'd)</span>');
-        return;
-      }
       X.connected = true;
-      sessionStorage.setItem("bf_x_user", d.username);
-      sessionStorage.setItem("bf_x_age", String(X.ageDays));
+      sessionStorage.setItem("bf_x_connected", "1");
       showXConnected();
-      tlog('<span class="ok">X connected: @' + d.username + ' (' + X.ageDays + 'd)</span>');
+      tlog('<span class="ok">X connected</span>');
       enableTasks();
       checkUnlock();
     }).catch(function () {
@@ -455,12 +447,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   })();
   // pulihkan sesi X setelah refresh
   (function restoreX() {
-    var u = sessionStorage.getItem("bf_x_user"), a = sessionStorage.getItem("bf_x_age");
-    if (!u || !a) return;
-    X.ageDays = parseInt(a, 10);
-    if (!xAgeOk()) return;
+    if (sessionStorage.getItem("bf_x_connected") !== "1") return;
     X.connected = true;
-    X.username = u;
     showXConnected();
     enableTasks();
   })();
@@ -633,7 +621,6 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
   })();
 
   // ---- init ----
-  $("minAgeLabel").textContent = CONFIG.MIN_X_AGE_DAYS;
   if (xGateOn()) {
     ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = true; });
   } else {
