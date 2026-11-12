@@ -4,20 +4,24 @@
   "image": "https://nftarchive.github.io/bitforge/images/common_696.png",
   "attributes": [
     {
-      "trait_type": "Rarity",
-      "value": "Common"
-    },
-    {
-      "trait_type": "Colors",
-      "value": 2
+      "trait_type": "Antenna",
+      "value": "Yes"
     },
     {
       "trait_type": "Eye style",
-      "value": "round"
+      "value": "triangle"
     },
     {
-      "trait_type": "Antenna",
-      "value": "Yes"
+      "trait_type": "Mouth",
+      "value": "Straight"
+    },
+    {
+      "trait_type": "Body",
+      "value": "Slim"
+    },
+    {
+      "trait_type": "Arms",
+      "value": "Down"
     }
   ],
   "animation_url": "https://nftarchive.github.io/bitforge/anim/common_696.html"
