@@ -4,20 +4,24 @@
   "image": "https://nftarchive.github.io/bitforge/images/rare_71.png",
   "attributes": [
     {
-      "trait_type": "Rarity",
-      "value": "Rare"
-    },
-    {
-      "trait_type": "Colors",
-      "value": 3
+      "trait_type": "Antenna",
+      "value": "No"
     },
     {
       "trait_type": "Eye style",
-      "value": "visor"
+      "value": "round"
     },
     {
-      "trait_type": "Antenna",
-      "value": "No"
+      "trait_type": "Mouth",
+      "value": "Grill"
+    },
+    {
+      "trait_type": "Body",
+      "value": "Slim"
+    },
+    {
+      "trait_type": "Arms",
+      "value": "Up"
     }
   ],
   "animation_url": "https://nftarchive.github.io/bitforge/anim/rare_71.html"
