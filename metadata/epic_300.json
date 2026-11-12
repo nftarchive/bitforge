@@ -18,10 +18,6 @@
     {
       "trait_type": "Antenna",
       "value": "Yes"
-    },
-    {
-      "trait_type": "Serial",
-      "value": 353
     }
   ],
   "animation_url": "https://nftarchive.github.io/bitforge/anim/epic_300.html"

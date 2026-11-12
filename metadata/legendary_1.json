@@ -20,10 +20,6 @@
       "value": "Yes"
     },
     {
-      "trait_type": "Serial",
-      "value": 1
-    },
-    {
       "trait_type": "Head",
       "value": "White"
     }
