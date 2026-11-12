@@ -4,20 +4,24 @@
   "image": "https://nftarchive.github.io/bitforge/images/epic_146.png",
   "attributes": [
     {
-      "trait_type": "Rarity",
-      "value": "Epic"
-    },
-    {
-      "trait_type": "Colors",
-      "value": 4
+      "trait_type": "Antenna",
+      "value": "Yes"
     },
     {
       "trait_type": "Eye style",
       "value": "visor"
     },
     {
-      "trait_type": "Antenna",
-      "value": "Yes"
+      "trait_type": "Mouth",
+      "value": "Straight"
+    },
+    {
+      "trait_type": "Body",
+      "value": "Standard"
+    },
+    {
+      "trait_type": "Arms",
+      "value": "One up"
     }
   ],
   "animation_url": "https://nftarchive.github.io/bitforge/anim/epic_146.html"
