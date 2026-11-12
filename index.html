@@ -649,7 +649,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     $("solveLine").textContent = "Checking anti-bot, please wait a moment...";
     tlog("$ solve puzzle");
     rpcCall(SEL.seedFor + addrPad(state.wallet)).then(function (seedHex) {
-      state.seed = seedHex.replace(/^0x/, "");
+      state.seed = seedHex.replace(/^0x/, "").toLowerCase(); // hex must be lowercase — the contract's _toHex() is lowercase, and the PoW preimage must match exactly
       return rpcUint(SEL.tierBits);
     }).then(function (bits) {
       state.bits = Number(bits);
