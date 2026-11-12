@@ -18,10 +18,6 @@
     {
       "trait_type": "Antenna",
       "value": "No"
-    },
-    {
-      "trait_type": "Serial",
-      "value": 2426
     }
   ],
   "animation_url": "https://nftarchive.github.io/bitforge/anim/common_1330.html"
