@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign a message with Phantom</title>
+<style>
+  body { background:#0d1117; color:#e6edf3; font-family: ui-monospace, monospace; margin:0; padding:24px; }
+  h1 { font-size:20px; }
+  pre { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:14px; white-space:pre-wrap; word-break:break-word; font-size:14px; }
+  button { background:#7c3aed; color:#fff; border:0; border-radius:8px; padding:14px 20px; font-size:16px; cursor:pointer; margin:8px 0; }
+  button:disabled { opacity:.5; cursor:default; }
+  textarea { width:100%; min-height:90px; background:#161b22; color:#7ee787; border:1px solid #30363d; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; }
+  .warn { color:#f85149; }
+  .ok { color:#7ee787; }
+  .small { color:#8b949e; font-size:13px; }
+</style>
+</head>
+<body>
+<h1>Sign a message with Phantom</h1>
+<p class="small">This page asks your Phantom wallet to sign the exact text below. No transaction, no fee. Check the text before you sign.</p>
+<h3>Message to sign</h3>
+<pre id="msg">Loading…</pre>
+<p id="wallet" class="small"></p>
+<button id="signBtn">Sign with Phantom</button>
+<h3>Signature (base58)</h3>
+<textarea id="sig" readonly placeholder="Your signature will appear here. Copy it and send it to your agent."></textarea>
+<p><button id="copyBtn" disabled>Copy signature</button></p>
+<p id="status" class="small"></p>
+<script>
+// Minimal base58 encoder (Bitcoin alphabet)
+const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function base58encode(bytes) {
+  let zeros = 0;
+  while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+  const digits = [0];
+  for (let i = zeros; i < bytes.length; i++) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
+    }
+    while (carry > 0) { digits.push(carry % 58); carry = (carry / 58) | 0; }
+  }
+  let out = '1'.repeat(zeros);
+  for (let i = digits.length - 1; i >= 0; i--) out += ALPHABET[digits[i]];
+  return out;
+}
+
+const params = new URLSearchParams(location.search);
+const msg = params.get('msg') || '';
+document.getElementById('msg').textContent = msg || '(no message in URL — open this page with ?msg=...)';
+
+const status = document.getElementById('status');
+const signBtn = document.getElementById('signBtn');
+const sigBox = document.getElementById('sig');
+const copyBtn = document.getElementById('copyBtn');
+
+function setStatus(t, cls) { status.textContent = t; status.className = 'small ' + (cls || ''); }
+
+if (!window.solana) {
+  setStatus('Phantom wallet not found in this browser. Open this page inside the Phantom app browser (Phantom app → browser/globe icon → paste this link).', 'warn');
+  signBtn.disabled = true;
+} else {
+  setStatus('Phantom detected. Tap Sign with Phantom.');
+}
+
+signBtn.addEventListener('click', async () => {
+  try {
+    if (!msg) { setStatus('No message to sign.', 'warn'); return; }
+    const provider = window.solana;
+    if (!provider.isPhantom) setStatus('This does not look like Phantom, trying anyway…');
+    const resp = await provider.connect().catch(() => null);
+    const pubkey = (resp && resp.publicKey) ? resp.publicKey.toString() : (provider.publicKey ? provider.publicKey.toString() : '');
+    if (pubkey) document.getElementById('wallet').textContent = 'Connected wallet: ' + pubkey;
+    const encoded = new TextEncoder().encode(msg);
+    const signed = await provider.signMessage(encoded, 'utf8');
+    const sig = base58encode(signed.signature);
+    sigBox.value = sig;
+    copyBtn.disabled = false;
+    setStatus('Signed. Copy the signature and send it to your agent.', 'ok');
+  } catch (e) {
+    setStatus('Signing failed or was rejected: ' + (e && e.message ? e.message : e), 'warn');
+  }
+});
+
+copyBtn.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(sigBox.value); setStatus('Signature copied.', 'ok'); }
+  catch (e) { sigBox.select(); document.execCommand('copy'); setStatus('Signature selected — copy it manually.', 'ok'); }
+});
+</script>
+</body>
+</html>
