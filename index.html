@@ -235,7 +235,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     mintFree: "0xc6d8ef78"       // mintFree(uint256 nonce, uint256 deadline, bytes signature)
   };
 
-  var state = { wallet: null, seed: null, bits: 20, nonce: null, solving: false, stopSolve: false, minted: false, signature: null, deadline: 0 };
+  var state = { wallet: null, seed: null, bits: 20, nonce: null, solving: false, stopSolve: false, minted: false, signature: null, deadline: 0, pace: { tasksAt: 0, solvedAt: 0 }, paceTimer: null };
 
   function $(id) { return document.getElementById(id); }
   function shortAddr(a) { return a.slice(0, 6) + "&hellip;" + a.slice(-4); }
@@ -480,7 +480,22 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     var padded = h + "0".repeat((64 - (h.length % 64)) % 64);
     return hexPad32(len) + padded;
   }
-  function enableTasks() { ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = false; }); }
+  // Anti-bot pacing (layer 4, free): 3s between steps so a bot sprinting
+  // through connect -> tasks -> solve -> mint is forced to wait like a human.
+  // A real user reads each step anyway, so they never notice 3s. Restoring a
+  // session after refresh is NOT paced (the user already waited once).
+  var PACE_MS = 3000;
+  function paceRemaining(kind) {
+    var at = kind === "tasks" ? state.pace.tasksAt : state.pace.solvedAt;
+    if (!at) return 0;
+    return Math.max(0, PACE_MS - (Date.now() - at));
+  }
+  function paceRecheck() {
+    var wait = Math.max(paceRemaining("tasks"), paceRemaining("mint"));
+    if (wait <= 0 || state.paceTimer !== null) return;
+    state.paceTimer = setTimeout(function () { state.paceTimer = null; checkUnlock(); }, wait + 50);
+  }
+  function enableTasks() { checkUnlock(); } // pacing applied by updateLocks()
   function b64url(buf) {
     var bytes = new Uint8Array(buf), s = "";
     for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
@@ -540,6 +555,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       X.connected = true;
       state.signature = d.signature;
       state.deadline = Number(d.deadline);
+      state.pace.tasksAt = Date.now(); // fresh X connect: tasks unlock after 3s (anti-bot pacing)
       sessionStorage.setItem("bf_x_connected", "1");
       sessionStorage.setItem("bf_x_sig", d.signature);
       sessionStorage.setItem("bf_x_deadline", String(d.deadline));
@@ -617,7 +633,9 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     setLock(5, !pDone ? "locked" : (state.minted ? "done" : "open"));
     // lock the controls too, not just the icons
     if (xGateOn()) $("btnConnectX").disabled = !hasW || X.connected;
-    ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = !(hasW && xDone); });
+    var paceTasks = paceRemaining("tasks") > 0;
+    ["t1", "t2", "t3"].forEach(function (id) { $(id).disabled = !(hasW && xDone) || paceTasks; });
+    if (paceTasks) paceRecheck();
   }
   function checkUnlock() {
     var ready = !!state.wallet && xOk() && tasksDone();
@@ -628,7 +646,8 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
     $("solveLine").innerHTML = ready
       ? (state.nonce !== null ? '<span class="ok">&#10003; solved! nonce: ' + state.nonce + '</span>' : "Ready — press Solve puzzle.")
       : '<span class="mut">Locked &mdash; ' + locked + '.</span>';
-    if (ready && state.nonce !== null) $("btnMint").disabled = !hasValidSig();
+    if (ready && state.nonce !== null) $("btnMint").disabled = !hasValidSig() || paceRemaining("mint") > 0;
+    if (ready && state.nonce !== null && paceRemaining("mint") > 0) paceRecheck();
     updateLocks();
     // Auto-solve: once the user finishes the X tasks, the anti-bot check
     // starts by itself — no extra click, no confusion. The Solve button
@@ -661,6 +680,7 @@ window.ROBOTS = {"legendary_1":[{"c":2,"r":10,"ch":"}","color":"#F5C518"},{"c":2
       state.solving = false;
       if (found === null) { $("solveLine").textContent = "Stopped."; $("btnSolve").disabled = false; return; }
       state.nonce = found;
+      state.pace.solvedAt = Date.now(); // puzzle solved: mint unlocks after 3s (anti-bot pacing)
       $("solveLine").innerHTML = okLine("solved! nonce: " + found);
       tlog(okLine("solved! nonce: " + found));
       checkUnlock();
