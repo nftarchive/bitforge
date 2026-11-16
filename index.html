@@ -540,12 +540,17 @@
       return;
     }
     var verifier = sessionStorage.getItem("bf_x_verifier");
+    // After the X OAuth redirect the page reloaded, so state.wallet is still
+    // null here — restoreWallet() runs later AND is async (eth_accounts).
+    // Read the wallet straight from sessionStorage (saved on connect) so the
+    // Worker gets a valid address instead of missing_wallet.
+    var wallet = state.wallet || sessionStorage.getItem("bf_wallet");
     history.replaceState(null, "", window.location.pathname);
     $("xLine").textContent = "Verifying your X account...";
     fetch(CONFIG.X_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI, wallet: state.wallet, contract: CONFIG.CONTRACT, chain_id: CONFIG.CHAIN_ID })
+      body: JSON.stringify({ code: code, code_verifier: verifier, redirect_uri: CONFIG.X_REDIRECT_URI, wallet: wallet, contract: CONFIG.CONTRACT, chain_id: CONFIG.CHAIN_ID })
     }).then(function (r) { return r.json(); }).then(function (d) {
       if (d.error || !d.connected || !d.signature || !d.deadline) {
         $("xLine").innerHTML = '<span class="warn">X login failed: ' + (d.error || "unknown") + '. Try again.</span>';
