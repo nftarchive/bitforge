@@ -831,12 +831,12 @@
     // hero: Legendary, tap to scatter
     var hero = $("heroRobot");
     if (hero) {
-      buildRobotPNG(hero, "legendary_1", 20);
+      buildRobotPNG(hero, "legendary_1", 16.5); // stage 264px = original art size (424/512 of 320), margins cropped, no black box
       addScatter(hero, 220);
     }
     // strip: 3 small robots, all tappable (scatter too)
     // smaller cells on narrow screens so all three fit in one row (360px)
-    var miniPx = window.innerWidth <= 380 ? 6 : 7;
+    var miniPx = window.innerWidth <= 380 ? 5 : 5.8; // stage = original art size (424/512 of old stage), margins cropped, no black box
     var strip = { common_2: "rCommon", rare_1: "rRare", epic_1: "rEpic" };
     Object.keys(strip).forEach(function (name) {
       var el = $(strip[name]);
