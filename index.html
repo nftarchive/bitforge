@@ -783,9 +783,11 @@
   // 16x16 tiles (same technique as the anim/ files). No more code-text
   // rendering, no window.ROBOTS data needed.
   (function () {
-    // v23 PNG = 512px canvas, robot art 424px centered (44px black margins).
-    // Page background is #0d1117, NOT black, so the PNG's black margins showed
-    // as a black box around each robot. Tiles map to the ART region only:
+    // Site robots use the transparent *_site.png variants (pure black -> alpha 0),
+    // so the robot has NO background box at all — the page bg (#0d1117) shows
+    // through between the characters. The NFT images (*.png) keep their black bg.
+    // v23 PNG = 512px canvas, robot art 424px centered (44px margins).
+    // Tiles map to the ART region only:
     // each tile = 424/16 = 26.5 image-px; size/position computed from that.
     var IMG = 512, MARGIN = 44, ART = 424, NT = 16;
     var SLICE = ART / NT;                       // 26.5
@@ -796,7 +798,7 @@
       el.style.position = "relative";
       el.style.width = (16 * cellPx) + "px";
       el.style.height = (16 * cellPx) + "px";
-      var url = CONFIG.IMAGE_BASE + name + ".png";
+      var url = CONFIG.IMAGE_BASE + name + "_site.png"; // transparent variant (pure black -> transparent); the NFT images (*.png) are untouched
       for (var r = 0; r < 16; r++) {
         for (var c = 0; c < 16; c++) {
           var tile = document.createElement("div");
