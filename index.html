@@ -43,7 +43,7 @@
   .hero { text-align:center; margin:4px 0 6px; }
   .heroRobot { margin:0 auto; cursor:pointer; }
   /* PNG tiles: robot drawn from its v23 PNG, sliced 16x16 (same as anim/) */
-  .tile { position:absolute; width:6.25%; height:6.25%; background-size:1600% 1600%; transition:transform .7s ease, opacity .7s ease; will-change:transform; }
+  .tile { position:absolute; width:6.25%; height:6.25%; transition:transform .7s ease, opacity .7s ease; will-change:transform; } /* background-size set inline per tile (art region) */
   .herohint { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .herocap { color:var(--muted); font-size:12px; margin-top:6px; }
   .herocap b { color:var(--gold); }
@@ -783,6 +783,15 @@
   // 16x16 tiles (same technique as the anim/ files). No more code-text
   // rendering, no window.ROBOTS data needed.
   (function () {
+    // v23 PNG = 512px canvas, robot art 424px centered (44px black margins).
+    // Page background is #0d1117, NOT black, so the PNG's black margins showed
+    // as a black box around each robot. Tiles map to the ART region only:
+    // each tile = 424/16 = 26.5 image-px; size/position computed from that.
+    var IMG = 512, MARGIN = 44, ART = 424, NT = 16;
+    var SLICE = ART / NT;                       // 26.5
+    var BG_SIZE = IMG / SLICE * 100;            // 1932.08%
+    var POS0 = MARGIN / (IMG - SLICE) * 100;    // 9.06%
+    var POSSTEP = SLICE / (IMG - SLICE) * 100;  // 5.46%
     function buildRobotPNG(el, name, cellPx) {
       el.style.position = "relative";
       el.style.width = (16 * cellPx) + "px";
@@ -795,7 +804,8 @@
           tile.style.left = (c * 6.25) + "%";
           tile.style.top = (r * 6.25) + "%";
           tile.style.backgroundImage = "url(" + url + ")";
-          tile.style.backgroundPosition = (c * 100 / 15) + "% " + (r * 100 / 15) + "%";
+          tile.style.backgroundSize = BG_SIZE + "% " + BG_SIZE + "%";
+          tile.style.backgroundPosition = (POS0 + c * POSSTEP) + "% " + (POS0 + r * POSSTEP) + "%";
           el.appendChild(tile);
         }
       }
