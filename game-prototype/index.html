@@ -13,6 +13,8 @@
   #counter{top:36px;left:14px;font-size:14px;color:#8a6100;}
   #hint{bottom:12px;left:14px;font-size:12px;color:#334155;}
   #toast{top:42%;left:50%;transform:translate(-50%,-50%);font-size:18px;color:#8a6100;display:none;text-align:center;}
+  #mission{top:60px;left:14px;font-size:14px;color:#0e7490;}
+  #carbtn{position:fixed;right:14px;bottom:56px;z-index:7;display:none;font-family:monospace,sans-serif;font-size:15px;font-weight:bold;padding:12px 16px;border-radius:999px;border:2px solid #ff2e88;background:rgba(255,255,255,.92);color:#be185d;cursor:pointer;}
   #err{bottom:36px;left:14px;font-size:11px;color:#b91c1c;white-space:pre-wrap;max-width:90vw;}
   #rarity{position:fixed;top:12px;right:12px;z-index:7;display:flex;gap:6px;}
   #rarity button{font-family:monospace,sans-serif;font-size:13px;font-weight:bold;padding:8px 10px;border-radius:999px;border:2px solid;background:rgba(255,255,255,.75);cursor:pointer;}
@@ -28,6 +30,8 @@
 <canvas id="c"></canvas>
 <div class="hud" id="title">BITFORGE <span>// city prototype</span></div>
 <div class="hud" id="counter">&#9670; 0 / 6</div>
+<div class="hud" id="mission">&#9678; MISI 1 / 3</div>
+<button id="carbtn">&#128663; NAIK</button>
 <div class="hud" id="hint">WASD / panah = jalan &nbsp;|&nbsp; sentuh kiri = joystick, kanan = putar kamera &nbsp;|&nbsp; 1-4 = ganti rarity</div>
 <div class="hud" id="toast"></div>
 <div class="hud" id="err"></div>
@@ -50,12 +54,12 @@ const renderer = new THREE.WebGLRenderer({canvas: $('c'), antialias: true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x8fd3f4);
-scene.fog = new THREE.Fog(0x8fd3f4, 60, 160);
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
-scene.add(new THREE.HemisphereLight(0xd6e9ff, 0x9a8f7a, 2.0));
-const sun = new THREE.DirectionalLight(0xfff1cf, 2.0);
-sun.position.set(30, 60, 20);
+scene.background = new THREE.Color(0x9fd9f2);
+scene.fog = new THREE.Fog(0x9fd9f2, 70, 180);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 300);
+scene.add(new THREE.HemisphereLight(0xe8f4ff, 0xb8a888, 2.3));
+const sun = new THREE.DirectionalLight(0xffdf9e, 2.4);
+sun.position.set(40, 45, 25);
 scene.add(sun);
 
 /* ---------- face textures from each robot's own pixel grid ---------- */
@@ -72,14 +76,39 @@ function faceTexture(grid, dominant, r0, r1, c0, c1) {
   tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
+/* A cell counts as a face feature (eye/mouth) when it is bright near-white.
+   The gruff rule: eyes + mouth white = 190. */
+function isWhite(hex) {
+  if (!hex) return false;
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r >= 170 && g >= 170 && b >= 170 && Math.max(r, g, b) - Math.min(r, g, b) <= 12;
+}
+/* Head texture: ONLY the white face features stay, everything else becomes
+   the robot's dominant color — so the face reads instantly at any distance. */
+function headTexture(grid, dominant, r0, r1, c0, c1) {
+  const w = c1 - c0 + 1, h = r1 - r0 + 1;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const cell = grid[r][c];
+    ctx.fillStyle = isWhite(cell) ? '#ffffff' : dominant;
+    ctx.fillRect(c - c0, r - r0, 1, 1);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
 
 /* ---------- Roblox-style blocky humanoid ---------- */
 const robot = new THREE.Group();
 const body = new THREE.Group();
 robot.add(body);
 const plainMat = new THREE.MeshLambertMaterial({color: 0xffffff});
-const headFaceMat = new THREE.MeshLambertMaterial({});
-const torsoFaceMat = new THREE.MeshLambertMaterial({});
+// face mats are BASIC (unlit) so the pixel face renders at full brightness, like the 2D art
+const headFaceMat = new THREE.MeshBasicMaterial({});
+const torsoFaceMat = new THREE.MeshBasicMaterial({});
 function boxWithFace(w, h, d, fm) {
   const geo = new THREE.BoxGeometry(w, h, d);
   const mesh = new THREE.Mesh(geo, [plainMat, plainMat, plainMat, plainMat, fm, fm]);
@@ -96,12 +125,12 @@ function limb(w, h, d, x, pivotY) {
 }
 const legL = limb(0.8, 1.6, 0.8, -0.45, 1.6);
 const legR = limb(0.8, 1.6, 0.8,  0.45, 1.6);
-const armL = limb(0.8, 1.9, 0.8, -1.45, 3.5);
-const armR = limb(0.8, 1.9, 0.8,  1.45, 3.5);
-const torso = boxWithFace(2.0, 1.9, 1.0, torsoFaceMat);
-torso.position.y = 2.55; body.add(torso);
-const head = boxWithFace(1.7, 1.4, 1.4, headFaceMat);
-head.position.y = 4.2; body.add(head);
+const armL = limb(0.8, 1.9, 0.8, -1.55, 3.6);
+const armR = limb(0.8, 1.9, 0.8,  1.55, 3.6);
+const torso = boxWithFace(2.2, 2.0, 1.1, torsoFaceMat);
+torso.position.y = 2.6; body.add(torso);
+const head = boxWithFace(2.1, 1.9, 1.7, headFaceMat);
+head.position.y = 4.55; body.add(head);
 
 /* ---------- rarity aura ring + floating nameplate ---------- */
 const auraRingMat = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.65, side: THREE.DoubleSide});
@@ -116,8 +145,8 @@ const plateCtx = plateCanvas.getContext('2d');
 const plateTex = new THREE.CanvasTexture(plateCanvas);
 plateTex.colorSpace = THREE.SRGBColorSpace;
 const plate = new THREE.Sprite(new THREE.SpriteMaterial({map: plateTex, transparent: true, depthTest: false}));
-plate.scale.set(7.2, 1.18, 1);
-plate.position.y = 5.9;
+plate.scale.set(5.0, 0.82, 1);
+plate.position.y = 6.6;
 robot.add(plate);
 function drawNameplate(R) {
   const ctx = plateCtx;
@@ -148,7 +177,7 @@ function setRarity(key) {
   current = key;
   plainMat.color.set(R.dominant);
   if (headFaceMat.map) headFaceMat.map.dispose();
-  headFaceMat.map = faceTexture(R.grid, R.dominant, 2, 7, 4, 11);
+  headFaceMat.map = headTexture(R.grid, R.dominant, 2, 7, 4, 11);
   headFaceMat.needsUpdate = true;
   if (torsoFaceMat.map) torsoFaceMat.map.dispose();
   torsoFaceMat.map = faceTexture(R.grid, R.dominant, 9, 15, 2, 13);
@@ -166,24 +195,100 @@ document.querySelectorAll('#rarity button').forEach(b =>
   b.addEventListener('click', () => setRarity(b.dataset.r)));
 setRarity('common');
 
-/* ---------- tiny city — DAYTIME ---------- */
+/* ---------- Vice City — bright PS2-style streets ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const rnd = mulberry32(20261117);
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(170, 170), new THREE.MeshLambertMaterial({color: 0x93a08c}));
+const lam = c => new THREE.MeshLambertMaterial({color: c});
+// ground: warm sidewalk base
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), lam(0xd9cfb8));
 ground.rotation.x = -Math.PI / 2; scene.add(ground);
-const plaza = new THREE.Mesh(new THREE.CircleGeometry(11, 32), new THREE.MeshLambertMaterial({color: 0xb7c0b5}));
-plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.01; scene.add(plaza);
-const palette = [0x9db4c6, 0xb5c0cc, 0xa3b8a1, 0xc9b791, 0x8fa8bf];
-for (let i = 0; i < 14; i++) {
-  const gx = (i % 5 - 2) * 24 + (rnd() - 0.5) * 8;
-  const gz = (Math.floor(i / 5) - 1) * 24 + (rnd() - 0.5) * 8;
-  if (Math.abs(gx) < 13 && Math.abs(gz) < 13) continue;
-  const w = 5 + rnd() * 4, h = 5 + rnd() * 9, d = 5 + rnd() * 4;
-  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshLambertMaterial({color: palette[i % palette.length]}));
-  b.position.set(gx, h / 2, gz);
-  scene.add(b);
+// streets: asphalt strips on a grid
+const ROAD = 0x3d4450, DASH = 0xf5f0dc;
+[-45, -15, 15, 45].forEach(v => {
+  const rv = new THREE.Mesh(new THREE.PlaneGeometry(10, 240), lam(ROAD));
+  rv.rotation.x = -Math.PI / 2; rv.position.set(v, 0.02, 0); scene.add(rv);
+  const rh = new THREE.Mesh(new THREE.PlaneGeometry(240, 10), lam(ROAD));
+  rh.rotation.x = -Math.PI / 2; rh.position.set(0, 0.02, v); scene.add(rh);
+});
+// dashed center lines
+for (const v of [-45, -15, 15, 45]) {
+  for (let p = -110; p <= 110; p += 8) {
+    const d1 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 3), lam(DASH));
+    d1.rotation.x = -Math.PI / 2; d1.position.set(v, 0.04, p); scene.add(d1);
+    const d2 = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), lam(DASH));
+    d2.rotation.x = -Math.PI / 2; d2.position.set(p, 0.04, v); scene.add(d2);
+  }
 }
+// center plaza
+const plaza = new THREE.Mesh(new THREE.CircleGeometry(11, 32), lam(0xe8e2d0));
+plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.03; scene.add(plaza);
+// pastel / neon buildings inside blocks
+const palette = [0xff9ecb, 0x3fd9c0, 0xff7f6b, 0xffd94d, 0xb388ff, 0x7be0a3, 0xffb38a, 0x7cc4ff, 0xb8e356, 0xff5da2];
+const NEON = [0xff4fd8, 0x00e5ff, 0xffe14d, 0x7dff5e];
+const blocks = [];
+for (const bx of [-60, -30, 0, 30, 60]) for (const bz of [-60, -30, 0, 30, 60]) {
+  if (Math.abs(bx) < 13 && Math.abs(bz) < 13) continue;
+  blocks.push([bx, bz]);
+}
+blocks.forEach(([bx, bz], i) => {
+  const w = 7 + rnd() * 4, h = 6 + rnd() * 11, d = 7 + rnd() * 4;
+  const col = palette[i % palette.length];
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), lam(col));
+  b.position.set(bx + (rnd() - 0.5) * 3, h / 2, bz + (rnd() - 0.5) * 3);
+  scene.add(b);
+  // neon sign strip on the front face
+  if (i % 3 === 0) {
+    const nc = NEON[(i / 3 | 0) % NEON.length];
+    const s = new THREE.Mesh(new THREE.BoxGeometry(w * 0.7, 0.7, 0.25),
+      new THREE.MeshLambertMaterial({color: nc, emissive: nc, emissiveIntensity: 0.55}));
+    s.position.set(b.position.x, Math.min(h - 1.2, 4.5), b.position.z + d / 2 + 0.15);
+    scene.add(s);
+  }
+});
+// palm trees along the sidewalks
+function palm(x, z) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 3.4, 6), lam(0x8a5a2b));
+  trunk.position.y = 1.7; g.add(trunk);
+  for (let k = 0; k < 6; k++) {
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.85, 2.2, 4), lam(0x2fae5f));
+    f.scale.set(1, 0.32, 1);
+    const a = k / 6 * Math.PI * 2;
+    f.position.set(Math.cos(a) * 0.9, 3.6, Math.sin(a) * 0.9);
+    f.rotation.z = Math.cos(a) * 0.9; f.rotation.x = -Math.sin(a) * 0.9;
+    g.add(f);
+  }
+  g.position.set(x, 0, z); scene.add(g);
+}
+[[-8, -38], [8, -38], [-8, 38], [8, 38], [-38, -8], [38, 8], [-38, 22], [38, -22], [-62, 8], [62, -8]].forEach(([x, z]) => palm(x, z));
+// parked box cars (static)
+function parkedCar(x, z, col, ry) {
+  const g = new THREE.Group();
+  const bdy = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 4.4), lam(col));
+  bdy.position.y = 0.55; g.add(bdy);
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.6, 2.2), lam(0x223344));
+  cab.position.set(0, 1.2, -0.2); g.add(cab);
+  [[-0.95, 1.5], [0.95, 1.5], [-0.95, -1.5], [0.95, -1.5]].forEach(([wx, wz]) => {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 10), lam(0x1a1a1a));
+    w.rotation.z = Math.PI / 2; w.position.set(wx, 0.42, wz); g.add(w);
+  });
+  g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+  return g;
+}
+parkedCar(-10, 22, 0xff3b30, 0); parkedCar(20, -10, 0x2f7bff, Math.PI / 2);
+parkedCar(-22, -20, 0xffd60a, 0); parkedCar(28, 18, 0x34c759, Math.PI / 2);
+parkedCar(-30, 12, 0xbf5af2, 0);
+// beach + ocean at the south edge
+const sand = new THREE.Mesh(new THREE.PlaneGeometry(240, 18), lam(0xf2e3b6));
+sand.rotation.x = -Math.PI / 2; sand.position.set(0, 0.02, -79); scene.add(sand);
+const ocean = new THREE.Mesh(new THREE.PlaneGeometry(240, 46), lam(0x2fb3e8));
+ocean.rotation.x = -Math.PI / 2; ocean.position.set(0, 0.01, -110); scene.add(ocean);
+[[-20, -78], [5, -80], [30, -77]].forEach(([x, z], i) => {
+  const u = new THREE.Mesh(new THREE.ConeGeometry(2.2, 1.2, 8), lam([0xff5da2, 0x00e5ff, 0xffd94d][i]));
+  u.position.set(x, 2.2, z); scene.add(u);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.2, 6), lam(0x8a5a2b));
+  pole.position.set(x, 1.1, z); scene.add(pole);
+});
 
 /* ---------- pickups ---------- */
 const pickups = [];
@@ -201,14 +306,85 @@ spawnPickups();
 let collected = 0;
 function updateCounter() { $('counter').innerHTML = '&#9670; ' + collected + ' / 6'; }
 
+/* ---------- mission waypoints (walk/drive to each, in order) ---------- */
+const WAYPOINTS = [[26, -22], [-32, 26], [12, 42]];
+let missionIdx = 0;
+const wpGroup = new THREE.Group(); scene.add(wpGroup);
+const wpBeam = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 9, 20, 1, true),
+  new THREE.MeshBasicMaterial({color: 0x00e5ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false}));
+wpBeam.position.y = 4.5; wpGroup.add(wpBeam);
+const wpRing = new THREE.Mesh(new THREE.RingGeometry(1.8, 2.5, 32),
+  new THREE.MeshBasicMaterial({color: 0x00e5ff, transparent: true, opacity: 0.9, side: THREE.DoubleSide}));
+wpRing.rotation.x = -Math.PI / 2; wpRing.position.y = 0.06; wpGroup.add(wpRing);
+function placeWaypoint() {
+  const [x, z] = WAYPOINTS[missionIdx];
+  wpGroup.position.set(x, 0, z);
+  $('mission').textContent = '◉ MISI ' + (missionIdx + 1) + ' / 3';
+}
+placeWaypoint();
+
+/* ---------- ONE drivable box car (hot pink) ---------- */
+const car = new THREE.Group();
+const carBodyM = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 4.6), lam(0xff2e88));
+carBodyM.position.y = 0.6; car.add(carBodyM);
+const carCabM = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 2.4), lam(0x223344));
+carCabM.position.set(0, 1.3, -0.2); car.add(carCabM);
+const carWheels = [];
+[[-1.05, 1.55], [1.05, 1.55], [-1.05, -1.55], [1.05, -1.55]].forEach(([wx, wz]) => {
+  const w = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.32, 12), lam(0x1a1a1a));
+  w.rotation.z = Math.PI / 2; w.position.set(wx, 0.45, wz); car.add(w); carWheels.push(w);
+});
+car.position.set(7, 0, 9);
+scene.add(car);
+let driving = false, carHeading = 0, carSpeed = 0;
+const HINT0 = 'WASD / panah = jalan | sentuh kiri = joystick, kanan = putar kamera | 1-4 = ganti rarity | E = naik mobil';
+function nearCar() {
+  const dx = car.position.x - robot.position.x, dz = car.position.z - robot.position.z;
+  return dx * dx + dz * dz < 20;
+}
+function toggleCar() {
+  if (driving) {
+    driving = false;
+    robot.visible = true;
+    robot.position.set(car.position.x + 3, 0, car.position.z + 1);
+    $('hint').textContent = HINT0;
+  } else if (nearCar()) {
+    driving = true;
+    robot.visible = false;
+    carSpeed = 0;
+    $('hint').textContent = 'Mengemudi! WASD = gas/belok | E / tombol = turun';
+  }
+}
+function driveCar(ix, iz, dt) {
+  let fwd = 0, steer = 0;
+  if (keys['w'] || keys['arrowup']) fwd += 1;
+  if (keys['s'] || keys['arrowdown']) fwd -= 1;
+  if (keys['a'] || keys['arrowleft']) steer += 1;
+  if (keys['d'] || keys['arrowright']) steer -= 1;
+  fwd += -joy.y; steer += -joy.x;
+  carSpeed += fwd * 14 * dt;
+  carSpeed *= Math.max(0, 1 - dt * 1.2);
+  carSpeed = Math.max(-8, Math.min(18, carSpeed));
+  carHeading += steer * 1.9 * dt * Math.min(1, Math.abs(carSpeed) / 6) * (carSpeed < 0 ? -1 : 1);
+  car.position.x += Math.sin(carHeading) * carSpeed * dt;
+  car.position.z += Math.cos(carHeading) * carSpeed * dt;
+  car.position.x = Math.max(-75, Math.min(75, car.position.x));
+  car.position.z = Math.max(-75, Math.min(75, car.position.z));
+  car.rotation.y = carHeading;
+  carWheels.forEach(w => { w.rotation.x += carSpeed * dt * 2; });
+  robot.position.copy(car.position);
+}
+document.getElementById('carbtn').addEventListener('click', toggleCar);
+
 /* ---------- controls: WASD + touch joystick + camera orbit ---------- */
 const keys = {};
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
   if (['1','2','3','4'].includes(e.key)) setRarity(['common','rare','epic','legendary'][+e.key - 1]);
+  if (e.key.toLowerCase() === 'e') toggleCar();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
-let camYaw = 0.6, camPitch = 0.32;
+let camYaw = 0.6, camPitch = 0.30;
 const joy = {active: false, id: null, ox: 0, oy: 0, x: 0, y: 0};
 const orbit = {active: false, id: null, lx: 0, ly: 0};
 const cv = $('c');
@@ -263,7 +439,8 @@ function tick() {
   ix += joy.x; iz += joy.y;
   const len = Math.hypot(ix, iz);
   const moving = len > 0.15;
-  if (moving) {
+  if (driving) driveCar(ix, iz, dt);
+  if (moving && !driving) {
     const cl = Math.min(len, 1);
     const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
     const mx = (ix * cos - iz * sin) * cl, mz = (ix * sin + iz * cos) * cl;
@@ -284,9 +461,10 @@ function tick() {
   legL.rotation.x = sw; legR.rotation.x = -sw;
   armL.rotation.x = -sw; armR.rotation.x = sw;
   body.position.y = moving ? Math.abs(Math.sin(walkPhase)) * 0.12 : 0;
-  // camera follow (third person)
-  const tx = robot.position.x, ty = robot.position.y + 3.4, tz = robot.position.z;
-  const dist = 12, cy = Math.cos(camYaw), sy = Math.sin(camYaw);
+  // camera follow (third person, closer so the robot fills the screen)
+  const tp = driving ? car.position : robot.position;
+  const tx = tp.x, ty = tp.y + 3.3, tz = tp.z;
+  const dist = 9, cy = Math.cos(camYaw), sy = Math.sin(camYaw);
   const cp = Math.cos(camPitch), sp = Math.sin(camPitch);
   const cx = tx - sy * cp * dist, cz = tz - cy * cp * dist, cy2 = ty + sp * dist;
   camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 6);
@@ -314,10 +492,30 @@ function tick() {
       }
     }
   }
+  // mission waypoint: reach the glowing beam
+  const wdx = wpGroup.position.x - robot.position.x, wdz = wpGroup.position.z - robot.position.z;
+  if (wdx * wdx + wdz * wdz < 12) {
+    missionIdx++;
+    if (missionIdx >= WAYPOINTS.length) {
+      $('toast').textContent = 'Semua misi selesai! 🎉';
+      $('toast').style.display = 'block';
+      setTimeout(() => { missionIdx = 0; placeWaypoint(); $('toast').style.display = 'none'; }, 2000);
+    } else {
+      $('toast').textContent = 'Misi ' + missionIdx + ' selesai!';
+      $('toast').style.display = 'block';
+      setTimeout(() => { $('toast').style.display = 'none'; }, 1200);
+      placeWaypoint();
+    }
+  }
+  // car button visibility
+  const cb = $('carbtn');
+  if (driving) { cb.style.display = 'block'; cb.textContent = '🚗 TURUN'; }
+  else if (nearCar()) { cb.style.display = 'block'; cb.textContent = '🚗 NAIK'; }
+  else cb.style.display = 'none';
   renderer.render(scene, camera);
   if (firstFrame) { firstFrame = false; console.log('BITFORGE_GAME_READY'); }
 }
-window.__game = {robot, pickups, setRarity, get collected() { return collected; }, get rarity() { return current; }};
+window.__game = {robot, pickups, car, setRarity, toggleCar, get collected() { return collected; }, get rarity() { return current; }, get driving() { return driving; }, get mission() { return missionIdx; }};
 tick();
 </script>
 </body>
