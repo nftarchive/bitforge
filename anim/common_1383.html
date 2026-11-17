@@ -7,48 +7,54 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-  body { background: #111111; overflow: hidden; }
+  body { background: #000000; overflow: hidden; }
   #stage { position: absolute; left: 50%; top: 50%; width: 352px; height: 352px;
            margin-left: -176px; margin-top: -176px; cursor: pointer;
            -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  .ch { position: absolute; width: 22px; height: 22px; line-height: 22px; text-align: center;
-        font-size: 19px; font-weight: 700; font-family: "DejaVu Sans Mono", ui-monospace, monospace;
-        transition: transform 0.7s cubic-bezier(.2,.7,.3,1), opacity 0.7s; will-change: transform; }
+  .tile { position: absolute; width: 6.25%; height: 6.25%;
+          transition: transform .7s ease, opacity .7s ease; will-change: transform;
+          background-repeat: no-repeat; }
 </style>
 </head>
 <body>
   <div id="stage"></div>
   <script>
-    var CELLS = [{"c": 2, "r": 10, "ch": ";", "color": "#D97706"}, {"c": 2, "r": 11, "ch": "}", "color": "#D97706"}, {"c": 2, "r": 12, "ch": "0", "color": "#D97706"}, {"c": 3, "r": 10, "ch": ">", "color": "#F5C518"}, {"c": 3, "r": 11, "ch": "}", "color": "#D97706"}, {"c": 3, "r": 12, "ch": ">", "color": "#F5C518"}, {"c": 4, "r": 2, "ch": ";", "color": "#D97706"}, {"c": 4, "r": 3, "ch": "=", "color": "#D97706"}, {"c": 4, "r": 4, "ch": "1", "color": "#D97706"}, {"c": 4, "r": 5, "ch": "1", "color": "#F5C518"}, {"c": 4, "r": 6, "ch": "<", "color": "#D97706"}, {"c": 4, "r": 7, "ch": ";", "color": "#D97706"}, {"c": 4, "r": 9, "ch": ";", "color": "#D97706"}, {"c": 4, "r": 10, "ch": ">", "color": "#D97706"}, {"c": 4, "r": 11, "ch": "+", "color": "#F5C518"}, {"c": 4, "r": 12, "ch": ";", "color": "#D97706"}, {"c": 4, "r": 13, "ch": "<", "color": "#D97706"}, {"c": 5, "r": 2, "ch": ";", "color": "#F5C518"}, {"c": 5, "r": 3, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 5, "ch": "1", "color": "#F5C518"}, {"c": 5, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 5, "r": 7, "ch": "0", "color": "#FFFFFF"}, {"c": 5, "r": 9, "ch": "+", "color": "#D97706"}, {"c": 5, "r": 10, "ch": "0", "color": "#D97706"}, {"c": 5, "r": 11, "ch": ";", "color": "#D97706"}, {"c": 5, "r": 12, "ch": "*", "color": "#F5C518"}, {"c": 5, "r": 13, "ch": "0", "color": "#D97706"}, {"c": 5, "r": 14, "ch": ";", "color": "#F5C518"}, {"c": 5, "r": 15, "ch": "0", "color": "#F5C518"}, {"c": 6, "r": 2, "ch": "=", "color": "#D97706"}, {"c": 6, "r": 3, "ch": "0", "color": "#FFFFFF"}, {"c": 6, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 6, "r": 5, "ch": "/", "color": "#D97706"}, {"c": 6, "r": 6, "ch": "}", "color": "#D97706"}, {"c": 6, "r": 7, "ch": "=", "color": "#F5C518"}, {"c": 6, "r": 9, "ch": "/", "color": "#D97706"}, {"c": 6, "r": 10, "ch": "/", "color": "#D97706"}, {"c": 6, "r": 11, "ch": "+", "color": "#F5C518"}, {"c": 6, "r": 12, "ch": "/", "color": "#F5C518"}, {"c": 6, "r": 13, "ch": "/", "color": "#F5C518"}, {"c": 6, "r": 14, "ch": "<", "color": "#F5C518"}, {"c": 6, "r": 15, "ch": "=", "color": "#D97706"}, {"c": 7, "r": 0, "ch": ">", "color": "#D97706"}, {"c": 7, "r": 1, "ch": ">", "color": "#F5C518"}, {"c": 7, "r": 2, "ch": "}", "color": "#F5C518"}, {"c": 7, "r": 3, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 7, "r": 5, "ch": "=", "color": "#F5C518"}, {"c": 7, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 7, "ch": "0", "color": "#FFFFFF"}, {"c": 7, "r": 8, "ch": "#", "color": "#D97706"}, {"c": 7, "r": 9, "ch": "/", "color": "#F5C518"}, {"c": 7, "r": 10, "ch": "+", "color": "#F5C518"}, {"c": 7, "r": 11, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 12, "ch": ";", "color": "#F5C518"}, {"c": 7, "r": 13, "ch": "/", "color": "#F5C518"}, {"c": 8, "r": 0, "ch": "#", "color": "#D97706"}, {"c": 8, "r": 1, "ch": "/", "color": "#F5C518"}, {"c": 8, "r": 2, "ch": "*", "color": "#F5C518"}, {"c": 8, "r": 3, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 5, "ch": "/", "color": "#D97706"}, {"c": 8, "r": 6, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 7, "ch": "#", "color": "#FFFFFF"}, {"c": 8, "r": 8, "ch": "<", "color": "#D97706"}, {"c": 8, "r": 9, "ch": "=", "color": "#F5C518"}, {"c": 8, "r": 10, "ch": ";", "color": "#D97706"}, {"c": 8, "r": 11, "ch": "+", "color": "#F5C518"}, {"c": 8, "r": 12, "ch": "<", "color": "#F5C518"}, {"c": 8, "r": 13, "ch": "{", "color": "#D97706"}, {"c": 9, "r": 2, "ch": "/", "color": "#D97706"}, {"c": 9, "r": 3, "ch": "0", "color": "#FFFFFF"}, {"c": 9, "r": 4, "ch": "#", "color": "#FFFFFF"}, {"c": 9, "r": 5, "ch": "*", "color": "#D97706"}, {"c": 9, "r": 6, "ch": ";", "color": "#F5C518"}, {"c": 9, "r": 7, "ch": ";", "color": "#D97706"}, {"c": 9, "r": 9, "ch": "*", "color": "#D97706"}, {"c": 9, "r": 10, "ch": "{", "color": "#F5C518"}, {"c": 9, "r": 11, "ch": "<", "color": "#D97706"}, {"c": 9, "r": 12, "ch": "/", "color": "#D97706"}, {"c": 9, "r": 13, "ch": "}", "color": "#F5C518"}, {"c": 9, "r": 14, "ch": "/", "color": "#D97706"}, {"c": 9, "r": 15, "ch": "+", "color": "#F5C518"}, {"c": 10, "r": 2, "ch": "1", "color": "#F5C518"}, {"c": 10, "r": 3, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 4, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 5, "ch": "*", "color": "#D97706"}, {"c": 10, "r": 6, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 7, "ch": "0", "color": "#FFFFFF"}, {"c": 10, "r": 9, "ch": "{", "color": "#F5C518"}, {"c": 10, "r": 10, "ch": "0", "color": "#F5C518"}, {"c": 10, "r": 11, "ch": "1", "color": "#F5C518"}, {"c": 10, "r": 12, "ch": "1", "color": "#D97706"}, {"c": 10, "r": 13, "ch": "+", "color": "#D97706"}, {"c": 10, "r": 14, "ch": "#", "color": "#F5C518"}, {"c": 10, "r": 15, "ch": "}", "color": "#D97706"}, {"c": 11, "r": 2, "ch": "0", "color": "#D97706"}, {"c": 11, "r": 3, "ch": ">", "color": "#F5C518"}, {"c": 11, "r": 4, "ch": "1", "color": "#D97706"}, {"c": 11, "r": 5, "ch": "}", "color": "#D97706"}, {"c": 11, "r": 6, "ch": "#", "color": "#F5C518"}, {"c": 11, "r": 7, "ch": "<", "color": "#D97706"}, {"c": 11, "r": 9, "ch": ">", "color": "#D97706"}, {"c": 11, "r": 10, "ch": "}", "color": "#F5C518"}, {"c": 11, "r": 11, "ch": "1", "color": "#D97706"}, {"c": 11, "r": 12, "ch": "=", "color": "#F5C518"}, {"c": 11, "r": 13, "ch": ">", "color": "#D97706"}, {"c": 12, "r": 10, "ch": "=", "color": "#F5C518"}, {"c": 12, "r": 11, "ch": "1", "color": "#D97706"}, {"c": 12, "r": 12, "ch": "{", "color": "#F5C518"}, {"c": 13, "r": 10, "ch": "1", "color": "#F5C518"}, {"c": 13, "r": 11, "ch": "/", "color": "#D97706"}, {"c": 13, "r": 12, "ch": "{", "color": "#F5C518"}];
-    var CELL = 22, stage = document.getElementById("stage");
-    CELLS.forEach(function (c) {
-      var s = document.createElement("span");
-      s.className = "ch"; s.textContent = c.ch; s.style.color = c.color;
-      s.style.left = (c.c * CELL) + "px"; s.style.top = (c.r * CELL) + "px";
-      stage.appendChild(s);
-    });
-    var spans = Array.prototype.slice.call(stage.children);
-    var busy = false;
-    function scatter() {
-      if (busy) return; busy = true;
-      spans.forEach(function (s) {
-        var dx = (Math.random() - 0.5) * 420, dy = (Math.random() - 0.5) * 420;
-        var rot = (Math.random() - 0.5) * 540;
-        s.style.transitionDuration = (0.5 + Math.random() * 0.4) + "s";
-        s.style.transform = "translate(" + dx + "px," + dy + "px) rotate(" + rot + "deg)";
+    // BitForge#0066 (Legendary #1) — final v23 pixel art, rendered as 16x16 PNG
+    // tiles from the NFT image itself. Tap/click = scatter, rebuilds after 1.6s.
+    // v23 PNG = 512px canvas, robot art 424px centered (44px margins).
+    var IMG = 512, MARGIN = 44, ART = 424, NT = 16;
+    var SLICE = ART / NT;                        // 26.5
+    var BG_SIZE = IMG / SLICE * 100;             // 1932.08%
+    var POS0 = MARGIN / (IMG - SLICE) * 100;     // 9.0628%
+    var POSSTEP = SLICE / (IMG - SLICE) * 100;   // 5.4583%
+    var URL = "https://nftarchive.github.io/bitforge/images/common_1383.png";
+    var stage = document.getElementById("stage");
+    for (var r = 0; r < 16; r++) {
+      for (var c = 0; c < 16; c++) {
+        var tile = document.createElement("div");
+        tile.className = "tile";
+        tile.style.left = (c * 6.25) + "%";
+        tile.style.top = (r * 6.25) + "%";
+        tile.style.backgroundImage = "url(" + URL + ")";
+        tile.style.backgroundSize = BG_SIZE + "% " + BG_SIZE + "%";
+        tile.style.backgroundPosition = (POS0 + c * POSSTEP) + "% " + (POS0 + r * POSSTEP) + "%";
+        stage.appendChild(tile);
+      }
+    }
+    var scattered = false;
+    stage.addEventListener("click", function () {
+      if (scattered) return;
+      var tiles = stage.querySelectorAll(".tile");
+      tiles.forEach(function (s) {
+        s.style.transform = "translate(" + (Math.random() * 220 - 110) + "px," + (Math.random() * 220 - 110) + "px) rotate(" + (Math.random() * 360 - 180) + "deg)";
         s.style.opacity = "0.25";
       });
+      scattered = true;
       setTimeout(function () {
-        spans.forEach(function (s) {
-          s.style.transitionDuration = (0.8 + Math.random() * 0.5) + "s";
-          s.style.transform = "translate(0,0) rotate(0deg)"; s.style.opacity = "1";
-        });
-        setTimeout(function () { busy = false; }, 1400);
-      }, 750);
-    }
-    document.addEventListener("click", scatter);
-    document.addEventListener("touchstart", function (e) { e.preventDefault(); scatter(); }, { passive: false });
-    setTimeout(scatter, 900);
+        tiles.forEach(function (s) { s.style.transform = ""; s.style.opacity = ""; });
+        scattered = false;
+      }, 1600);
+    });
   </script>
 </body>
 </html>
