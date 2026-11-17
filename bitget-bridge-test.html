@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bitget bridge test</title>
+<style>
+body{background:#0d1117;color:#e6edf3;font-family:monospace;padding:20px;font-size:18px;line-height:1.5}
+h1{font-size:22px}
+.ok{color:#3fb950}
+.bad{color:#f85149}
+.box{border:1px solid #30363d;padding:16px;margin:12px 0;word-break:break-all}
+.small{font-size:14px;color:#8b949e}
+</style>
+</head>
+<body>
+<h1>BITGET BRIDGE TEST</h1>
+<p>Halaman ini cuma ngetes apakah bridge <b>control.sendTokenToWeb</b> di WebView Bitget mau jalan. Token lengkap TIDAK PERNAH ditampilkan di layar dan TIDAK PERNAH dikirim ke mana-mana.</p>
+<div class="box" id="bridge">Checking bridge...</div>
+<div class="box" id="result">Waiting for callback...</div>
+<p class="small">Cara baca hasil: kalau callback FIRE dan rToken = YES, berarti bridge jalan dan temuan naik level. Kalau callback tidak fire dalam 5 detik, berarti filter memblokir dan temuan tetap LOW. Screenshot halaman ini sebagai bukti.</p>
+<script>
+function show(id, html){ document.getElementById(id).innerHTML = html; }
+var hasBridge = (typeof window.control !== 'undefined');
+show('bridge', hasBridge
+  ? '<span class="ok">window.control ADA (WebView Bitget)</span>'
+  : '<span class="bad">window.control TIDAK ADA (ini browser biasa, bukan WebView Bitget)</span>');
+window.cb = function(data){
+  var keys = [];
+  try { keys = Object.keys(data || {}); } catch (e) { keys = ['(unreadable)']; }
+  var hasRToken = !!(data && data.rToken);
+  var rLen = hasRToken ? String(data.rToken).length : 0;
+  var loginName = (data && data.loginName) ? data.loginName : '(none)';
+  show('result',
+    'Callback <b>FIRED</b><br>' +
+    'fields: ' + keys.join(', ') + '<br>' +
+    'rToken present: <b>' + (hasRToken ? 'YES' : 'NO') + '</b>' +
+    (hasRToken ? '<br>rToken length: ' + rLen : '') +
+    '<br>loginName: ' + loginName +
+    '<br><span class="bad">Token lengkap sengaja TIDAK ditampilkan.</span>');
+};
+try {
+  if (hasBridge) {
+    window.control.sendTokenToWeb('cb');
+    setTimeout(function(){
+      var r = document.getElementById('result');
+      if (r.innerHTML.indexOf('Waiting') === 0) {
+        r.innerHTML = '<span class="bad">Callback TIDAK fire dalam 5 detik (kemungkinan diblok filter server).</span>';
+      }
+    }, 5000);
+  } else {
+    show('result', 'Bridge tidak ada, tidak ada yang dites.');
+  }
+} catch (e) {
+  show('result', 'ERROR saat panggil bridge: ' + e.message);
+}
+</script>
+</body>
+</html>
