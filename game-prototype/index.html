@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BitForge — City Prototype</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d1117;font-family:monospace,sans-serif;}
+  #c{display:block;width:100%;height:100%;touch-action:none;}
+  .hud{position:fixed;color:#e6edf3;z-index:5;pointer-events:none;text-shadow:0 1px 2px #000;}
+  #title{top:12px;left:14px;font-size:15px;font-weight:bold;letter-spacing:1px;}
+  #title span{color:#f5c518;}
+  #counter{top:36px;left:14px;font-size:14px;color:#f5c518;}
+  #hint{bottom:12px;left:14px;font-size:12px;color:#8b949e;}
+  #toast{top:42%;left:50%;transform:translate(-50%,-50%);font-size:18px;color:#f5c518;display:none;text-align:center;}
+  #err{bottom:36px;left:14px;font-size:11px;color:#ff7b72;white-space:pre-wrap;max-width:90vw;}
+  #joy{position:fixed;width:110px;height:110px;border:2px solid rgba(255,255,255,.35);border-radius:50%;display:none;z-index:6;pointer-events:none;}
+  #knob{position:absolute;width:48px;height:48px;left:31px;top:31px;background:rgba(245,197,24,.85);border-radius:50%;}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="title">BITFORGE <span>// city prototype</span></div>
+<div class="hud" id="counter">&#9670; 0 / 6</div>
+<div class="hud" id="hint">WASD / panah = jalan &nbsp;|&nbsp; sentuh kiri = joystick, kanan = putar kamera</div>
+<div class="hud" id="toast"></div>
+<div class="hud" id="err"></div>
+<div id="joy"><div id="knob"></div></div>
+<script type="module">
+import * as THREE from 'three';
+
+const GRID = [[null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, "#b59111", null, "#af6004", "#a5840f", "#9e5704", "#914f03", null, "#be9812", null, null, null, null], [null, null, null, null, "#ae8b10", "#bebebe", "#bebebe", "#bebebe", "#bebebe", null, null, "#c39d12", null, null, null, null], [null, null, null, null, null, null, "#bebebe", "#bebebe", null, "#bebebe", "#bebebe", null, null, null, null, null], [null, null, null, null, "#b56304", null, "#9b5504", "#cba313", null, null, "#ddb215", "#c46c05", null, null, null, null], [null, null, null, null, "#8f4e03", "#d1a814", "#d6ac14", null, "#bebebe", null, "#e4b715", null, null, null, null, null], [null, null, null, null, null, "#cf7105", null, "#efc017", "#ae5f04", null, "#ecbd16", null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, "#9a5504", "#c39c12", "#c39d12", null, "#9d5604", null, null, null, null, null, null], [null, null, null, "#894b03", null, null, "#854903", null, "#aa5d04", "#ab5e04", "#95780e", null, null, "#8a4b03", null, null], [null, null, null, null, "#a68510", null, null, null, null, "#884b03", "#844803", "#a0800f", "#92750e", "#9e7f0f", null, null], [null, null, "#a25804", null, "#aa8910", "#7e4503", null, null, "#844803", null, null, null, "#a1810f", null, null, null], [null, null, null, null, "#a35904", "#713e03", null, "#9b7d0e", null, null, "#be9812", "#ab5e04", null, null, null, null], [null, null, null, null, null, "#c59e13", "#965204", null, null, null, null, null, null, null, null, null], [null, null, null, null, null, "#6d3c02", null, null, null, null, null, null, null, null, null, null]];
+const DOMINANT = '#a9730a';
+const $ = id => document.getElementById(id);
+window.addEventListener('error', e => { $('err').textContent = 'ERR: ' + e.message; });
+
+/* ---------- renderer / scene ---------- */
+const renderer = new THREE.WebGLRenderer({canvas: $('c'), antialias: true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+scene.fog = new THREE.Fog(0x0d1117, 45, 120);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
+scene.add(new THREE.HemisphereLight(0x9db4ff, 0x1a1206, 1.25));
+const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+sun.position.set(30, 50, 20);
+scene.add(sun);
+
+/* ---------- face textures from the robot's own pixel grid ---------- */
+function faceTexture(r0, r1, c0, c1) {
+  const w = c1 - c0 + 1, h = r1 - r0 + 1;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    ctx.fillStyle = GRID[r][c] || DOMINANT;
+    ctx.fillRect(c - c0, r - r0, 1, 1);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const plainMat = new THREE.MeshLambertMaterial({color: DOMINANT});
+function boxWithFace(w, h, d, tex) {
+  const fm = new THREE.MeshLambertMaterial({map: tex});
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geo, [plainMat, plainMat, plainMat, plainMat, fm, fm]);
+  return mesh;
+}
+
+/* ---------- Roblox-style blocky humanoid ---------- */
+const robot = new THREE.Group();
+const body = new THREE.Group();
+robot.add(body);
+function limb(w, h, d, x, pivotY) {
+  const g = new THREE.Group();
+  g.position.set(x, pivotY, 0);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), plainMat);
+  m.position.y = -h / 2;
+  g.add(m);
+  body.add(g);
+  return g;
+}
+const legL = limb(0.8, 1.6, 0.8, -0.45, 1.6);
+const legR = limb(0.8, 1.6, 0.8,  0.45, 1.6);
+const armL = limb(0.8, 1.9, 0.8, -1.45, 3.5);
+const armR = limb(0.8, 1.9, 0.8,  1.45, 3.5);
+const torso = boxWithFace(2.0, 1.9, 1.0, faceTexture(9, 15, 2, 13));
+torso.position.y = 2.55; body.add(torso);
+const head = boxWithFace(1.7, 1.4, 1.4, faceTexture(2, 7, 4, 11));
+head.position.y = 4.2; body.add(head);
+scene.add(robot);
+
+/* ---------- tiny city ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rnd = mulberry32(20261117);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(170, 170), new THREE.MeshLambertMaterial({color: 0x12151a}));
+ground.rotation.x = -Math.PI / 2; scene.add(ground);
+const plaza = new THREE.Mesh(new THREE.CircleGeometry(11, 32), new THREE.MeshLambertMaterial({color: 0x1a1f27}));
+plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.01; scene.add(plaza);
+const palette = [0x2e3947, 0x37424f, 0x28323e, 0x3d4c5e, 0x32404e];
+for (let i = 0; i < 14; i++) {
+  const gx = (i % 5 - 2) * 24 + (rnd() - 0.5) * 8;
+  const gz = (Math.floor(i / 5) - 1) * 24 + (rnd() - 0.5) * 8;
+  if (Math.abs(gx) < 13 && Math.abs(gz) < 13) continue;
+  const w = 5 + rnd() * 4, h = 5 + rnd() * 9, d = 5 + rnd() * 4;
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshLambertMaterial({color: palette[i % palette.length]}));
+  b.position.set(gx, h / 2, gz);
+  scene.add(b);
+  if (rnd() < 0.6) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, 0.25, d + 0.1),
+      new THREE.MeshLambertMaterial({color: 0xf5c518, emissive: 0x8a6d00}));
+    strip.position.set(gx, h + 0.12, gz);
+    scene.add(strip);
+  }
+}
+for (let i = 0; i < 6; i++) {
+  const a = (i / 6) * Math.PI * 2 + 0.4;
+  const px = Math.cos(a) * 15, pz = Math.sin(a) * 15;
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 6),
+    new THREE.MeshLambertMaterial({color: 0x3a4552}));
+  pole.position.set(px, 1.6, pz); scene.add(pole);
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8),
+    new THREE.MeshLambertMaterial({color: 0xffd97a, emissive: 0xa67c00}));
+  lamp.position.set(px, 3.3, pz); scene.add(lamp);
+}
+
+/* ---------- pickups ---------- */
+const pickups = [];
+function spawnPickups() {
+  for (let i = 0; i < 6; i++) {
+    const a = rnd() * Math.PI * 2, r = 16 + rnd() * 30;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9),
+      new THREE.MeshLambertMaterial({color: 0xf5c518, emissive: 0xa67c00}));
+    m.position.set(Math.cos(a) * r, 1.3, Math.sin(a) * r);
+    m.userData.taken = false;
+    scene.add(m); pickups.push(m);
+  }
+}
+spawnPickups();
+let collected = 0;
+function updateCounter() { $('counter').innerHTML = '&#9670; ' + collected + ' / 6'; }
+
+/* ---------- controls: WASD + touch joystick + camera orbit ---------- */
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+let camYaw = 0.6, camPitch = 0.32;
+const joy = {active: false, id: null, ox: 0, oy: 0, x: 0, y: 0};
+const orbit = {active: false, id: null, lx: 0, ly: 0};
+const cv = $('c');
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch' && e.clientX < window.innerWidth / 2 && !joy.active) {
+    joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = 0; joy.y = 0;
+    const j = $('joy'); j.style.display = 'block';
+    j.style.left = (joy.ox - 55) + 'px'; j.style.top = (joy.oy - 55) + 'px';
+    $('knob').style.left = '31px'; $('knob').style.top = '31px';
+  } else if (!orbit.active) {
+    orbit.active = true; orbit.id = e.pointerId; orbit.lx = e.clientX; orbit.ly = e.clientY;
+  }
+  try { cv.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointers */ }
+});
+cv.addEventListener('pointermove', e => {
+  if (joy.active && e.pointerId === joy.id) {
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+    const len = Math.hypot(dx, dy), max = 48;
+    if (len > max) { dx *= max / len; dy *= max / len; }
+    joy.x = dx / max; joy.y = dy / max;
+    $('knob').style.left = (31 + dx) + 'px'; $('knob').style.top = (31 + dy) + 'px';
+  } else if (orbit.active && e.pointerId === orbit.id) {
+    camYaw -= (e.clientX - orbit.lx) * 0.006;
+    camPitch = Math.max(0.08, Math.min(1.0, camPitch + (e.clientY - orbit.ly) * 0.004));
+    orbit.lx = e.clientX; orbit.ly = e.clientY;
+  }
+});
+function endPointer(e) {
+  if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.x = 0; joy.y = 0; $('joy').style.display = 'none'; }
+  if (orbit.active && e.pointerId === orbit.id) orbit.active = false;
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ---------- loop ---------- */
+const SPEED = 9;
+let walkPhase = 0, faceAngle = 0, firstFrame = true;
+const clock = new THREE.Clock();
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  let ix = 0, iz = 0;
+  if (keys['w'] || keys['arrowup']) iz -= 1;
+  if (keys['s'] || keys['arrowdown']) iz += 1;
+  if (keys['a'] || keys['arrowleft']) ix -= 1;
+  if (keys['d'] || keys['arrowright']) ix += 1;
+  ix += joy.x; iz += joy.y;
+  const len = Math.hypot(ix, iz);
+  const moving = len > 0.15;
+  if (moving) {
+    const cl = Math.min(len, 1);
+    const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
+    const mx = (ix * cos - iz * sin) * cl, mz = (ix * sin + iz * cos) * cl;
+    robot.position.x += mx * SPEED * dt;
+    robot.position.z += mz * SPEED * dt;
+    robot.position.x = Math.max(-70, Math.min(70, robot.position.x));
+    robot.position.z = Math.max(-70, Math.min(70, robot.position.z));
+    faceAngle = Math.atan2(mx, mz);
+    walkPhase += dt * SPEED * 1.5;
+  }
+  // face movement direction (smooth)
+  let d = faceAngle - robot.rotation.y;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  robot.rotation.y += d * Math.min(1, dt * 10);
+  // walk swing + bob
+  const sw = moving ? Math.sin(walkPhase) * 0.55 : 0;
+  legL.rotation.x = sw; legR.rotation.x = -sw;
+  armL.rotation.x = -sw; armR.rotation.x = sw;
+  body.position.y = moving ? Math.abs(Math.sin(walkPhase)) * 0.12 : 0;
+  // camera follow (third person)
+  const tx = robot.position.x, ty = robot.position.y + 3.4, tz = robot.position.z;
+  const dist = 12, cy = Math.cos(camYaw), sy = Math.sin(camYaw);
+  const cp = Math.cos(camPitch), sp = Math.sin(camPitch);
+  const cx = tx - sy * cp * dist, cz = tz - cy * cp * dist, cy2 = ty + sp * dist;
+  camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 6);
+  camera.position.y += (cy2 - camera.position.y) * Math.min(1, dt * 6);
+  camera.position.z += (cz - camera.position.z) * Math.min(1, dt * 6);
+  camera.lookAt(tx, ty, tz);
+  // pickups: bob, spin, collect
+  const t = clock.elapsedTime;
+  for (const p of pickups) {
+    if (p.userData.taken) continue;
+    p.rotation.y = t * 1.5;
+    p.position.y = 1.3 + Math.sin(t * 2 + p.position.x) * 0.25;
+    const dx = p.position.x - robot.position.x, dz = p.position.z - robot.position.z;
+    if (dx * dx + dz * dz < 2.9) {
+      p.userData.taken = true; p.visible = false;
+      collected++; updateCounter();
+      if (collected >= 6) {
+        $('toast').textContent = 'Semua terkumpul! Spawn lagi...';
+        $('toast').style.display = 'block';
+        setTimeout(() => {
+          for (const q of pickups) { q.userData.taken = false; q.visible = true; }
+          collected = 0; updateCounter();
+          $('toast').style.display = 'none';
+        }, 1800);
+      }
+    }
+  }
+  renderer.render(scene, camera);
+  if (firstFrame) { firstFrame = false; console.log('BITFORGE_GAME_READY'); }
+}
+window.__game = {robot, pickups, get collected() { return collected; }};
+tick();
+</script>
+</body>
+</html>
