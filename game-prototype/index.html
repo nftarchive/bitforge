@@ -46,8 +46,10 @@
   #nearHint{bottom:96px;left:50%;transform:translateX(-50%);font-size:14px;font-weight:700;color:#0e7490;background:rgba(255,255,255,.92);border-radius:99px;padding:8px 16px;box-shadow:0 2px 10px rgba(20,40,70,.2);display:none;}
   #missionBtn{position:fixed;right:14px;bottom:110px;z-index:7;display:none;font-family:inherit;font-size:16px;font-weight:800;padding:14px 20px;border-radius:999px;border:2px solid #0891b2;background:rgba(255,255,255,.95);color:#0e7490;cursor:pointer;box-shadow:0 4px 14px rgba(20,40,70,.25);}
   #err{bottom:36px;left:14px;font-size:11px;color:#b91c1c;white-space:pre-wrap;max-width:90vw;}
-  #joy{position:fixed;width:110px;height:110px;border:2px solid rgba(255,255,255,.8);border-radius:50%;display:none;z-index:6;pointer-events:none;background:rgba(255,255,255,.15);}
-  #knob{position:absolute;width:48px;height:48px;left:31px;top:31px;background:rgba(245,197,24,.95);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #joy{position:fixed;width:150px;height:150px;border:2px solid rgba(255,255,255,.8);border-radius:50%;display:none;z-index:6;pointer-events:none;background:rgba(255,255,255,.15);}
+  #knob{position:absolute;width:64px;height:64px;left:43px;top:43px;background:rgba(245,197,24,.95);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #joyHint{position:fixed;left:14px;bottom:170px;z-index:6;pointer-events:none;display:none;font-size:12px;font-weight:700;color:#0e7490;background:rgba(255,255,255,.92);border-radius:99px;padding:8px 14px;box-shadow:0 2px 10px rgba(20,40,70,.2);}
+  @media (pointer:coarse){#joyHint{display:block;}}
   @media (max-width:640px){
     #ql{width:168px;padding:8px 10px;}
     #quests{font-size:11px;line-height:1.7;}
@@ -108,6 +110,7 @@
 <button id="missionBtn">&#10003; SELESAIKAN MISI</button>
 <div class="hud" id="err"></div>
 <div id="joy"><div id="knob"></div></div>
+<div id="joyHint">&#128070; sentuh &amp; seret di kiri layar untuk jalan</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -169,22 +172,21 @@ function loadPngCanvas(dataUrl) {
       sctx.drawImage(img, 0, 0);
       const data = sctx.getImageData(0, 0, W, H);
       const px = data.data;
+      /* key ONLY exact pure-black (0,0,0) background pixels — the v23 PNG
+         background is exactly black, and dark glyph pixels must survive */
       for (let i = 0; i < px.length; i += 4) {
-        if (px[i] + px[i + 1] + px[i + 2] < 30) px[i + 3] = 0;
+        if (px[i] === 0 && px[i + 1] === 0 && px[i + 2] === 0) px[i + 3] = 0;
       }
       sctx.putImageData(data, 0, 0);
-      /* halo: dark silhouette of the glyphs, blurred, behind them */
-      const halo = document.createElement('canvas'); halo.width = W; halo.height = H;
-      const hctx = halo.getContext('2d');
-      hctx.drawImage(src, 0, 0);
-      hctx.globalCompositeOperation = 'source-in';
-      hctx.fillStyle = '#101828';
-      hctx.fillRect(0, 0, W, H);
+      /* solid backing card behind the glyphs: the NFT art is sparse code
+         glyphs on black, so without a solid back the character looks
+         see-through in a bright 3D scene. The card covers exactly the
+         424px art area (44px margins stay transparent) and matches the
+         BitForge site background, so the robot reads as a solid character. */
       const out = document.createElement('canvas'); out.width = W; out.height = H;
       const octx = out.getContext('2d');
-      octx.filter = 'blur(6px)';
-      octx.drawImage(halo, 0, 0);
-      octx.filter = 'none';
+      octx.fillStyle = '#0d1117';
+      octx.beginPath(); octx.roundRect(44, 44, 424, 424, 28); octx.fill();
       octx.drawImage(src, 0, 0);
       resolve(out);
     };
@@ -232,7 +234,7 @@ function drawNameplate(R) {
 }
 /* the robot: a flat billboard sprite (Paper Mario style) + soft shadow */
 const robot = new THREE.Group();
-const spriteMat = new THREE.SpriteMaterial({transparent: true, depthWrite: false});
+const spriteMat = new THREE.SpriteMaterial({transparent: true, depthWrite: true, opacity: 1, alphaTest: 0.05});
 const sprite = new THREE.Sprite(spriteMat);
 sprite.scale.set(2.7, 2.7, 1);
 sprite.position.y = 1.35;
@@ -364,7 +366,8 @@ function tree(x, z, s = 1) {
   c3.position.set(-0.85 * s, 3.8 * s, -0.25 * s); g.add(c3);
   g.position.set(x, 0, z); scene.add(g);
 }
-[[10, 12], [-12, -10], [12, -22], [-22, 12], [24, -12], [-12, 24], [40, -30], [-38, 28], [28, 38], [-40, -28], [10, 40], [-36, -38], [44, 8], [-44, 6]].forEach(([x, z], i) => tree(x, z, 0.85 + (i % 3) * 0.18));
+const TREES = [[10, 12], [-12, -10], [12, -22], [-22, 12], [24, -12], [-12, 24], [40, -30], [-38, 28], [28, 38], [-40, -28], [10, 40], [-36, -38], [44, 8], [-44, 6]];
+TREES.forEach(([x, z], i) => tree(x, z, 0.85 + (i % 3) * 0.18));
 
 /* street lamps along the roads */
 const lampBulbs = [];
@@ -377,7 +380,8 @@ function lamp(x, z) {
   bulb.position.y = 4.35; g.add(bulb); lampBulbs.push(bulb.material);
   g.position.set(x, 0, z); scene.add(g);
 }
-[[6, -12], [-6, 14], [12, 6], [-14, -6], [6, 28], [-6, -28]].forEach(([x, z]) => lamp(x, z));
+const LAMPS = [[6, -12], [-6, 14], [12, 6], [-14, -6], [6, 28], [-6, -28]];
+LAMPS.forEach(([x, z]) => lamp(x, z));
 
 /* red mailbox on a post */
 {
@@ -402,6 +406,34 @@ function lamp(x, z) {
   bar.rotation.x = Math.PI / 2; bar.position.set(-0.05, 0.98, 0); g.add(bar);
   g.position.set(12.6, 0, 19.4); g.rotation.y = 0.5; g.rotation.z = 0.12;
   scene.add(g);
+}
+/* ---------- collision: AABB colliders (houses, fences, trees, lamps, mailbox, bike) ----------
+   Houses are rotated ±90°, so their world footprint swaps w/d. The robot is
+   treated as a circle (r=0.8) so it stops at walls and slides along them. */
+const ROBOT_R = 0.8;
+const COLLIDERS = [];
+HOUSES.forEach(h => {
+  COLLIDERS.push({minX: h.x - h.d / 2, maxX: h.x + h.d / 2, minZ: h.z - h.w / 2, maxZ: h.z + h.w / 2});
+  const fx = h.x + Math.sin(h.ry) * (h.d / 2 + 3.2);
+  const fz = h.z + Math.cos(h.ry) * (h.d / 2 + 3.2);
+  COLLIDERS.push({minX: fx - 0.3, maxX: fx + 0.3, minZ: fz - 2.6, maxZ: fz + 2.6});
+});
+TREES.forEach(([x, z]) => COLLIDERS.push({minX: x - 0.4, maxX: x + 0.4, minZ: z - 0.4, maxZ: z + 0.4}));
+LAMPS.forEach(([x, z]) => COLLIDERS.push({minX: x - 0.3, maxX: x + 0.3, minZ: z - 0.3, maxZ: z + 0.3}));
+COLLIDERS.push({minX: 7.1, maxX: 8.1, minZ: -13.55, maxZ: -12.45}); /* mailbox */
+COLLIDERS.push({minX: 11.6, maxX: 13.6, minZ: 18.7, maxZ: 20.1}); /* bicycle */
+function collidesAt(x, z) {
+  for (const c of COLLIDERS) {
+    const cx = Math.max(c.minX, Math.min(x, c.maxX));
+    const cz = Math.max(c.minZ, Math.min(z, c.maxZ));
+    const dx = x - cx, dz = z - cz;
+    if (dx * dx + dz * dz < ROBOT_R * ROBOT_R) return true;
+  }
+  if (cheatCar.visible) {
+    const dx = x - cheatCar.position.x, dz = z - cheatCar.position.z;
+    if (dx * dx + dz * dz < 1.9 * 1.9) return true;
+  }
+  return false;
 }
 /* drifting white clouds */
 const clouds = [];
@@ -597,12 +629,35 @@ let camYaw = 0.6, camOffset = 0;
 const joy = {active: false, id: null, ox: 0, oy: 0, x: 0, y: 0};
 const orbit = {active: false, id: null, lx: 0, ly: 0};
 const cv = $('c');
+const JOY_R = 60; /* max joystick deflection, px */
+const JOY_DEAD = 0.25; /* ignore tiny thumb offsets — stops self-drift */
+function joyReset() { joy.active = false; joy.id = null; joy.x = 0; joy.y = 0; $('joy').style.display = 'none'; }
+function resetInputs() {
+  joyReset();
+  orbit.active = false; orbit.id = null;
+  for (const k in keys) keys[k] = false;
+}
+/* touches that start on a UI element (buttons, rarity bar, HUD cards) must
+   never feed the joystick or the camera orbit */
+function onUiElement(x, y) {
+  for (const id of ['ql', 'tr', 'rarity', 'bl', 'br', 'missionBtn', 'nearHint', 'toast']) {
+    const el = $(id);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return true;
+  }
+  return false;
+}
 cv.addEventListener('pointerdown', e => {
-  if (e.pointerType === 'touch' && e.clientX < window.innerWidth / 2 && !joy.active) {
+  e.preventDefault();
+  if (onUiElement(e.clientX, e.clientY)) return;
+  if ((e.pointerType === 'touch' || e.pointerType === 'pen') && e.clientX < window.innerWidth * 0.65 && !joy.active) {
     joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = 0; joy.y = 0;
     const j = $('joy'); j.style.display = 'block';
-    j.style.left = (joy.ox - 55) + 'px'; j.style.top = (joy.oy - 55) + 'px';
-    $('knob').style.left = '31px'; $('knob').style.top = '31px';
+    j.style.left = (joy.ox - 75) + 'px'; j.style.top = (joy.oy - 75) + 'px';
+    $('knob').style.left = '43px'; $('knob').style.top = '43px';
+    $('joyHint').style.display = 'none';
   } else if (!orbit.active) {
     orbit.active = true; orbit.id = e.pointerId; orbit.lx = e.clientX; orbit.ly = e.clientY;
   }
@@ -611,21 +666,29 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   if (joy.active && e.pointerId === joy.id) {
     let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
-    const len = Math.hypot(dx, dy), max = 48;
-    if (len > max) { dx *= max / len; dy *= max / len; }
-    joy.x = dx / max; joy.y = dy / max;
-    $('knob').style.left = (31 + dx) + 'px'; $('knob').style.top = (31 + dy) + 'px';
+    const len = Math.hypot(dx, dy);
+    if (len > JOY_R) { dx *= JOY_R / len; dy *= JOY_R / len; }
+    let nx = dx / JOY_R, ny = dy / JOY_R;
+    const mag = Math.hypot(nx, ny);
+    if (mag < JOY_DEAD) { nx = 0; ny = 0; }
+    else { const g = Math.min(1, mag * 1.4); nx = nx / mag * g; ny = ny / mag * g; }
+    joy.x = nx; joy.y = ny;
+    $('knob').style.left = (43 + dx) + 'px'; $('knob').style.top = (43 + dy) + 'px';
   } else if (orbit.active && e.pointerId === orbit.id) {
     camOffset -= (e.clientX - orbit.lx) * 0.006;
     orbit.lx = e.clientX; orbit.ly = e.clientY;
   }
 });
 function endPointer(e) {
-  if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.x = 0; joy.y = 0; $('joy').style.display = 'none'; }
+  if (joy.active && e.pointerId === joy.id) joyReset();
   if (orbit.active && e.pointerId === orbit.id) orbit.active = false;
 }
 cv.addEventListener('pointerup', endPointer);
 cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('pointerleave', endPointer);
+cv.addEventListener('lostpointercapture', endPointer);
+window.addEventListener('blur', resetInputs);
+document.addEventListener('visibilitychange', () => { if (document.hidden) resetInputs(); });
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -667,7 +730,7 @@ setInterval(drawMinimap, 250);
 drawMinimap();
 
 /* ---------- main loop ---------- */
-const SPEED = 8;
+const SPEED = 9.5;
 let walkPhase = 0, faceAngle = 0, firstFrame = true;
 const clock = new THREE.Clock();
 function tick() {
@@ -677,6 +740,7 @@ function tick() {
   const flying = performance.now() < flyUntil;
   $('flyTag').style.display = flying ? 'inline' : 'none';
   if (flying) $('flyTag').textContent = '✈️ FLYMODE ' + Math.ceil((flyUntil - performance.now()) / 1000) + 's';
+  if (!joy.active) { joy.x = 0; joy.y = 0; } /* belt & braces: no touch, no drift */
   let ix = 0, iz = 0;
   if (keys['w'] || keys['arrowup']) iz -= 1;
   if (keys['s'] || keys['arrowdown']) iz += 1;
@@ -684,15 +748,18 @@ function tick() {
   if (keys['d'] || keys['arrowright']) ix += 1;
   ix += joy.x; iz += joy.y;
   const len = Math.hypot(ix, iz);
-  const moving = len > 0.15;
+  const moving = len > 0.08;
   const speed = SPEED * (energy < 15 && !flying ? 0.55 : 1) * (flying ? 1.3 : 1);
   if (moving) {
     const cl = Math.min(len, 1);
     const yaw = camYaw + camOffset;
     const sin = Math.sin(yaw), cos = Math.cos(yaw);
     const mx = (ix * cos - iz * sin) * cl, mz = (ix * sin + iz * cos) * cl;
-    robot.position.x += mx * speed * dt;
-    robot.position.z += mz * speed * dt;
+    /* axis-separated AABB collision: a blocked axis stops, the other slides */
+    const nx = robot.position.x + mx * speed * dt;
+    if (!collidesAt(nx, robot.position.z)) robot.position.x = nx;
+    const nz = robot.position.z + mz * speed * dt;
+    if (!collidesAt(robot.position.x, nz)) robot.position.z = nz;
     robot.position.x = Math.max(-70, Math.min(70, robot.position.x));
     robot.position.z = Math.max(-70, Math.min(70, robot.position.z));
     faceAngle = Math.atan2(mx, mz);
@@ -757,7 +824,11 @@ function tick() {
   if (firstFrame) { firstFrame = false; console.log('BITFORGE_GAME_READY'); }
 }
 window.__game = {
-  robot, setRarity, applyCheat, completeMission,
+  robot, setRarity, applyCheat, completeMission, collidesAt,
+  teleport(x, z) { robot.position.set(x, 0, z); },
+  setCamYaw(v) { camYaw = v; camOffset = 0; },
+  get colliders() { return COLLIDERS.length; },
+  get joyVec() { return {x: joy.x, y: joy.y, active: joy.active}; },
   get rarity() { return current; },
   get points() { return points; },
   get mission() { return missionIdx; },
