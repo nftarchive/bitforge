@@ -322,15 +322,20 @@ function makeArm(side) {
   return pivot;
 }
 const armL = makeArm(-1), armR = makeArm(1);
-/* legs + feet */
-for (const side of [-1, 1]) {
+/* v6.1: legs on hip pivots so they can swing while walking (like the arms) */
+function makeLeg(side) {
+  const pivot = new THREE.Group();
+  pivot.position.set(0.32 * side, 0.85, 0);
   const leg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.45), matDark);
-  leg.position.set(0.32 * side, 0.6, 0);
-  bodyGroup.add(leg);
+  leg.position.y = -0.25;
+  pivot.add(leg);
   const foot = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.75), matDark);
-  foot.position.set(0.32 * side, 0.175, 0.05);
-  bodyGroup.add(foot);
+  foot.position.set(0, -0.675, 0.05);
+  pivot.add(foot);
+  bodyGroup.add(pivot);
+  return pivot;
 }
+const legL = makeLeg(-1), legR = makeLeg(1);
 const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24),
   new THREE.MeshBasicMaterial({color: 0x1a2e1a, transparent: true, opacity: 0.28}));
 shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.02;
@@ -1084,7 +1089,7 @@ function tick() {
   ensureChunks();
   ground.position.set(robot.position.x, 0, robot.position.z);
   stars.position.set(robot.position.x, 0, robot.position.z);
-  /* the 3D body faces movement; bob + lean + arm swing while walking */
+  /* the 3D body faces movement; bob + lean + arm swing + leg swing while walking */
   let d = faceAngle - robot.rotation.y;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
@@ -1096,6 +1101,11 @@ function tick() {
   const swingT = moving ? Math.sin(walkPhase) * 0.55 : 0;
   armL.rotation.x += (swingT - armL.rotation.x) * Math.min(1, dt * 10);
   armR.rotation.x += (-swingT - armR.rotation.x) * Math.min(1, dt * 10);
+  /* v6.1: legs swing alternately while walking, opposite phase to the
+     same-side arm (natural gait); ease back to neutral when idle */
+  const legSwingT = moving ? Math.sin(walkPhase) * 0.5 : 0;
+  legL.rotation.x += (-legSwingT - legL.rotation.x) * Math.min(1, dt * 10);
+  legR.rotation.x += (legSwingT - legR.rotation.x) * Math.min(1, dt * 10);
   const shScale = 1 - Math.max(0, robot.position.y) * 0.06;
   shadow.scale.setScalar(Math.max(0.5, shScale));
   /* vertical: jump / fly / gravity */
@@ -1175,6 +1185,7 @@ window.__game = {
   setFacing(a) { faceAngle = a; },
   get colliders() { return COLLIDERS.length; },
   get joyVec() { return {x: joy.x, y: joy.y, active: joy.active}; },
+  get legSwing() { return {l: legL.rotation.x, r: legR.rotation.x}; },
   get rarity() { return current; },
   get points() { return points; },
   get mission() { return missionIdx; },
