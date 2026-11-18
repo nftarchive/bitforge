@@ -9,8 +9,12 @@
   #c{display:block;width:100%;height:100%;touch-action:none;}
   .hud{position:fixed;z-index:5;pointer-events:none;}
   .card{background:rgba(255,255,255,.88);border-radius:14px;box-shadow:0 2px 10px rgba(20,40,70,.18);padding:10px 12px;color:#1e293b;}
-  /* top-left: quests + status */
-  #ql{top:12px;left:12px;width:218px;}
+  /* top-left: quests + status — collapsible slide panel, collapsed by default.
+     The toggle button sits above it as its tab; the panel slides in below. */
+  #ql{top:56px;left:12px;width:218px;transition:transform .28s ease;pointer-events:auto;}
+  #ql.closed{transform:translateX(calc(-100% - 16px));}
+  #qlClose{float:right;cursor:pointer;color:#64748b;font-size:15px;line-height:1;padding:0 2px;}
+  #missionToggle{position:fixed;top:12px;left:12px;z-index:7;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:1px;padding:8px 12px;border-radius:999px;border:2px solid #0f766e;background:rgba(255,255,255,.92);color:#0f766e;cursor:pointer;box-shadow:0 2px 10px rgba(20,40,70,.18);}
   #ql h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;color:#0f766e;}
   #ql .bar-row{display:flex;align-items:center;gap:6px;margin:4px 0;font-size:11px;font-weight:600;}
   #ql .bar-row .lbl{width:44px;color:#475569;}
@@ -33,12 +37,8 @@
   #rarity{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:7;display:flex;gap:6px;}
   #rarity button{font-family:inherit;font-size:13px;font-weight:700;padding:8px 12px;border-radius:999px;border:2px solid;background:rgba(255,255,255,.85);cursor:pointer;box-shadow:0 2px 8px rgba(20,40,70,.15);}
   #rarity button.active{color:#fff !important;}
-  /* bottom-left: avatar */
-  #bl{bottom:12px;left:12px;display:flex;gap:10px;align-items:center;}
-  #avatar{width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(20,40,70,.2);image-rendering:pixelated;}
-  #bl .who{font-size:12px;line-height:1.5;color:#1e293b;}
-  #bl .who b{font-size:13px;}
-  #flyTag{font-size:11px;font-weight:700;color:#0284c7;display:none;}
+  /* flymode tag: standalone badge under the rarity bar (was inside the removed bottom-left card) */
+  #flyTag{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;font-size:11px;font-weight:700;color:#0284c7;background:rgba(255,255,255,.92);border-radius:99px;padding:4px 10px;box-shadow:0 2px 8px rgba(20,40,70,.18);display:none;}
   /* bottom-right: controls */
   #br{bottom:12px;right:12px;text-align:right;font-size:11.5px;line-height:1.7;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-weight:600;}
   #br .kbd{background:rgba(255,255,255,.85);color:#1e293b;border-radius:5px;padding:1px 6px;font-weight:700;text-shadow:none;}
@@ -46,10 +46,10 @@
   #nearHint{bottom:96px;left:50%;transform:translateX(-50%);font-size:14px;font-weight:700;color:#0e7490;background:rgba(255,255,255,.92);border-radius:99px;padding:8px 16px;box-shadow:0 2px 10px rgba(20,40,70,.2);display:none;}
   #missionBtn{position:fixed;right:14px;bottom:110px;z-index:7;display:none;font-family:inherit;font-size:16px;font-weight:800;padding:14px 20px;border-radius:999px;border:2px solid #0891b2;background:rgba(255,255,255,.95);color:#0e7490;cursor:pointer;box-shadow:0 4px 14px rgba(20,40,70,.25);}
   #err{bottom:36px;left:14px;font-size:11px;color:#b91c1c;white-space:pre-wrap;max-width:90vw;}
-  #joy{position:fixed;width:150px;height:150px;border:2px solid rgba(255,255,255,.8);border-radius:50%;display:none;z-index:6;pointer-events:none;background:rgba(255,255,255,.15);}
+  #joy{position:fixed;left:24px;bottom:24px;width:150px;height:150px;border:2px solid rgba(255,255,255,.8);border-radius:50%;display:none;z-index:6;pointer-events:none;background:rgba(255,255,255,.15);}
   #knob{position:absolute;width:64px;height:64px;left:43px;top:43px;background:rgba(245,197,24,.95);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3);}
   #joyHint{position:fixed;left:14px;bottom:170px;z-index:6;pointer-events:none;display:none;font-size:12px;font-weight:700;color:#0e7490;background:rgba(255,255,255,.92);border-radius:99px;padding:8px 14px;box-shadow:0 2px 10px rgba(20,40,70,.2);}
-  @media (pointer:coarse){#joyHint{display:block;}}
+  @media (pointer:coarse){#joyHint{display:block;}#joy{display:block;}}
   @media (max-width:640px){
     #ql{width:168px;padding:8px 10px;}
     #quests{font-size:11px;line-height:1.7;}
@@ -57,7 +57,6 @@
     #rarity button{font-size:11px;padding:6px 8px;}
     #minimap{width:96px;height:96px;}
     #br{display:none;}
-    #bl .who{display:none;}
     #toast{font-size:15px;max-width:92vw;white-space:normal;}
     #nearHint{font-size:12px;bottom:120px;max-width:92vw;text-align:center;}
   }
@@ -69,8 +68,9 @@
 <body>
 <canvas id="c"></canvas>
 
-<div class="hud card" id="ql">
-  <h3>&#9733; MISI BITFORGE</h3>
+<button id="missionToggle">&#9733; MISI</button>
+<div class="hud card closed" id="ql">
+  <h3>&#9733; MISI BITFORGE <span id="qlClose" title="Tutup">&#10005;</span></h3>
   <div class="bar-row"><span class="lbl">Energi</span><div class="bar"><div id="energyFill"></div></div><span class="val" id="energyVal">100</span></div>
   <div class="bar-row"><span class="lbl">Poin</span><div class="bar"><div id="pointsFill"></div></div><span class="val" id="pointsVal">0</span></div>
   <ul id="quests">
@@ -94,15 +94,12 @@
   <button data-r="legendary" style="color:#a16207;border-color:#EAB308">Legendary</button>
 </div>
 
-<div class="hud card" id="bl">
-  <canvas id="avatar" width="72" height="72"></canvas>
-  <div class="who"><b id="whoName">BitForge#2571</b><br><span id="whoRarity" style="color:#5b6470">Common &middot; x1 poin</span><br><span id="flyTag">&#9992;&#65039; FLYMODE 10s</span></div>
-</div>
+<span id="flyTag">&#9992;&#65039; FLYMODE 10s</span>
 
 <div class="hud" id="br">
   <span class="kbd">WASD</span> jalan &nbsp; <span class="kbd">Space</span> lompat<br>
   <span class="kbd">E</span> selesaikan misi &nbsp; <span class="kbd">1-4</span> ganti robot<br>
-  seret kanan = putar kamera &middot; sentuh kiri = joystick
+  seret kanan = putar kamera &middot; joystick kiri bawah = jalan
 </div>
 
 <div class="hud" id="toast"></div>
@@ -110,7 +107,7 @@
 <button id="missionBtn">&#10003; SELESAIKAN MISI</button>
 <div class="hud" id="err"></div>
 <div id="joy"><div id="knob"></div></div>
-<div id="joyHint">&#128070; sentuh &amp; seret di kiri layar untuk jalan</div>
+<div id="joyHint">&#128070; seret joystick kiri bawah untuk jalan</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -558,12 +555,6 @@ stars.visible = false; scene.add(stars);
 /* ---------- rarity switching ---------- */
 let current = 'common';
 let points = 0, energy = 100;
-function drawAvatar(R) {
-  const cv = $('avatar'), ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, 72, 72);
-  if (AVC[current]) ctx.drawImage(AVC[current], 4, 4, 64, 64);
-  else ctx.drawImage(gridCanvas(R, 4), 4, 4, 64, 64);
-}
 function setRarity(key) {
   if (!ROBOTS[key]) return;
   const R = ROBOTS[key];
@@ -576,10 +567,6 @@ function setRarity(key) {
   headFaceMat.needsUpdate = true;
   antennaGroup.visible = hasAntenna(R);
   drawNameplate(R);
-  drawAvatar(R);
-  $('whoName').textContent = R.name;
-  $('whoRarity').textContent = R.rarity + ' · x' + MULT[key] + ' poin';
-  $('whoRarity').style.color = R.color;
   $('mult').textContent = 'Multiplier: x' + MULT[key] + ' (' + R.rarity + ')';
   document.querySelectorAll('#rarity button').forEach(b => {
     const on = b.dataset.r === key;
@@ -724,13 +711,27 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 $('missionBtn').addEventListener('click', completeMission);
+/* v5.1: mission panel is a collapsible slide panel, collapsed by default.
+   The ★ MISI button toggles it; the ✕ inside the panel closes it. */
+$('missionToggle').addEventListener('click', () => $('ql').classList.toggle('closed'));
+$('qlClose').addEventListener('click', () => $('ql').classList.add('closed'));
 let camYaw = 0.6, camOffset = 0;
 const joy = {active: false, id: null, ox: 0, oy: 0, x: 0, y: 0};
 const orbit = {active: false, id: null, lx: 0, ly: 0};
 const cv = $('c');
 const JOY_R = 60; /* max joystick deflection, px */
 const JOY_DEAD = 0.25; /* ignore tiny thumb offsets — stops self-drift */
-function joyReset() { joy.active = false; joy.id = null; joy.x = 0; joy.y = 0; $('joy').style.display = 'none'; }
+function joyReset() {
+  joy.active = false; joy.id = null; joy.x = 0; joy.y = 0;
+  $('knob').style.left = '43px'; $('knob').style.top = '43px';
+  /* idle base visibility is CSS-driven (media query): visible on coarse
+     pointers, hidden on mouse/keyboard. Clearing the inline style lets the
+     stylesheet decide, and it re-evaluates if the pointer type changes. */
+  $('joy').style.display = '';
+}
+/* v5.1: joystick base is FIXED at bottom-left (24px, 24px), 150px circle */
+const JOY_CX = 24 + 75, JOY_CY = () => window.innerHeight - (24 + 75);
+joyReset(); /* centre the knob */
 function resetInputs() {
   joyReset();
   orbit.active = false; orbit.id = null;
@@ -739,7 +740,7 @@ function resetInputs() {
 /* touches that start on a UI element (buttons, rarity bar, HUD cards) must
    never feed the joystick or the camera orbit */
 function onUiElement(x, y) {
-  for (const id of ['ql', 'tr', 'rarity', 'bl', 'br', 'missionBtn', 'nearHint', 'toast']) {
+  for (const id of ['ql', 'missionToggle', 'tr', 'rarity', 'br', 'missionBtn', 'nearHint', 'toast']) {
     const el = $(id);
     if (!el) continue;
     const r = el.getBoundingClientRect();
@@ -751,10 +752,10 @@ function onUiElement(x, y) {
 cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (onUiElement(e.clientX, e.clientY)) return;
-  if ((e.pointerType === 'touch' || e.pointerType === 'pen') && e.clientX < window.innerWidth * 0.65 && !joy.active) {
-    joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = 0; joy.y = 0;
-    const j = $('joy'); j.style.display = 'block';
-    j.style.left = (joy.ox - 75) + 'px'; j.style.top = (joy.oy - 75) + 'px';
+  if ((e.pointerType === 'touch' || e.pointerType === 'pen') && !joy.active &&
+      Math.hypot(e.clientX - JOY_CX, e.clientY - JOY_CY()) <= 95) {
+    /* touch started on the fixed bottom-left joystick base */
+    joy.active = true; joy.id = e.pointerId; joy.ox = JOY_CX; joy.oy = JOY_CY(); joy.x = 0; joy.y = 0;
     $('knob').style.left = '43px'; $('knob').style.top = '43px';
     $('joyHint').style.display = 'none';
   } else if (!orbit.active) {
