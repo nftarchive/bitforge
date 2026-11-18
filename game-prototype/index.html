@@ -853,7 +853,7 @@ function tick() {
     const cl = Math.min(len, 1);
     const yaw = camYaw + camOffset;
     const sin = Math.sin(yaw), cos = Math.cos(yaw);
-    const mx = (ix * cos - iz * sin) * cl, mz = (ix * sin + iz * cos) * cl;
+    const mx = (-ix * cos - iz * sin) * cl, mz = (ix * sin - iz * cos) * cl;
     /* axis-separated AABB collision: a blocked axis stops, the other slides */
     const nx = robot.position.x + mx * speed * dt;
     if (!collidesAt(nx, robot.position.z)) robot.position.x = nx;
