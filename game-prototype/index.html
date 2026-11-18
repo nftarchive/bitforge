@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BitForge — Neighborhood Prototype v4</title>
+<title>BitForge — Neighborhood Prototype v5</title>
 <style>
   html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#7ec8f2;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
   #c{display:block;width:100%;height:100%;touch-action:none;}
@@ -141,12 +141,13 @@ sun.position.set(45, 55, 30);
 scene.add(sun);
 const lam = c => new THREE.MeshLambertMaterial({color: c});
 
-/* ---------- robot sprite: the EXACT v23 NFT art on a billboard ----------
+/* ---------- PNG textures: the EXACT v23 NFT art ----------
    NOTE: the 16x16 color grid alone renders as solid squares — the real NFT
-   art is CODE GLYPHS (5x7 pixel font). So the sprite texture is built from
-   the actual v23 PNG (byte-identical to the live OpenSea image): pure black
-   keyed to transparent + a soft dark halo so the thin glyphs read against
-   the bright suburb. The color grid stays as a fallback if a PNG fails. */
+   art is CODE GLYPHS (5x7 pixel font). So textures are built from the
+   actual v23 PNGs (byte-identical to the live OpenSea images). loadPngCanvas
+   feeds the HUD avatar (pure black keyed to transparent + solid #0d1117
+   backing card); loadFaceCanvas (below, v5 section) crops the head region
+   for the 3D robot's face. The color grid stays as a fallback if a PNG fails. */
 function gridCanvas(R, cellPx) {
   const cv = document.createElement('canvas');
   cv.width = 16 * cellPx; cv.height = 16 * cellPx;
@@ -200,19 +201,22 @@ function canvasTexture(cv) {
   tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
-/* preload the 4 PNG sprite textures; re-apply current rarity when ready */
-const TEX = {}, AVC = {};
+/* preload the 4 PNG avatar canvases + face textures; re-apply current rarity when ready */
+const AVC = {};
 const pngReady = (async () => {
   for (const key of Object.keys(ROBOTS)) {
     try {
       const cv = await loadPngCanvas(PNGS[key]);
-      TEX[key] = canvasTexture(cv);
       AVC[key] = cv;
     } catch (err) { /* keep grid fallback */ }
+    try {
+      const fcv = await loadFaceCanvas(PNGS[key]);
+      FACE_TEX[key] = canvasTexture(fcv);
+    } catch (err) { /* keep grid-face fallback */ }
   }
   setRarity(current);
 })();
-/* nameplate above the sprite */
+/* nameplate above the robot */
 const plateCanvas = document.createElement('canvas');
 plateCanvas.width = 512; plateCanvas.height = 84;
 const plateCtx = plateCanvas.getContext('2d');
@@ -232,13 +236,104 @@ function drawNameplate(R) {
   ctx.fillText(text, 256, 44);
   plateTex.needsUpdate = true;
 }
-/* the robot: a flat billboard sprite (Paper Mario style) + soft shadow */
+/* ---------- v5: chunky 3D TOY ROBOT ----------
+   v1–v3 extruded the grid into a flat voxel slab (rejected: ugly).
+   v4 was a flat billboard card (rejected: pasted-on, not 3D).
+   v5: a REAL 3D toy robot with volume — big cube head, torso, stubby
+   arms/legs/feet in the robot's dominant color. The FACE is the exact NFT
+   art: the head region (grid rows 2-7, cols 3-12) cropped from the real
+   v23 PNG and used as the front-face texture of the head cube. */
+const FACE_CROP = {x0: 44 + 3 * 26.5, y0: 44 + 2 * 26.5, w: 10 * 26.5, h: 6 * 26.5};
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.round(((n >> 16) & 255) * f));
+  const g = Math.min(255, Math.round(((n >> 8) & 255) * f));
+  const b = Math.min(255, Math.round((n & 255) * f));
+  return new THREE.Color((r << 16) | (g << 8) | b);
+}
+function loadFaceCanvas(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = FACE_CROP.w; cv.height = FACE_CROP.h;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, FACE_CROP.x0, FACE_CROP.y0, FACE_CROP.w, FACE_CROP.h, 0, 0, FACE_CROP.w, FACE_CROP.h);
+      resolve(cv);
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+/* grid-based face fallback (solid squares — only until the PNG loads) */
+function gridFaceTexture(R) {
+  const cv = document.createElement('canvas');
+  cv.width = 10 * 16; cv.height = 6 * 16;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, cv.width, cv.height);
+  for (let r = 2; r <= 7; r++) for (let c = 3; c <= 12; c++) {
+    const cell = R.grid[r][c];
+    if (!cell) continue;
+    ctx.fillStyle = cell;
+    ctx.fillRect((c - 3) * 16, (r - 2) * 16, 16, 16);
+  }
+  return canvasTexture(cv);
+}
+function hasAntenna(R) {
+  for (let r = 0; r <= 1; r++) for (let c = 0; c < 16; c++) if (R.grid[r][c]) return true;
+  return false;
+}
+const FACE_TEX = {};
 const robot = new THREE.Group();
-const spriteMat = new THREE.SpriteMaterial({transparent: true, depthWrite: true, opacity: 1, alphaTest: 0.05});
-const sprite = new THREE.Sprite(spriteMat);
-sprite.scale.set(2.7, 2.7, 1);
-sprite.position.y = 1.35;
-robot.add(sprite);
+const bodyGroup = new THREE.Group();
+robot.add(bodyGroup);
+const matDominant = lam(0xffffff);
+const matDark = lam(0xffffff);
+const matAccent = lam(0xffffff);
+const headFaceMat = new THREE.MeshBasicMaterial({map: null});
+/* head: big cube, face texture on the +z front, solid dominant elsewhere */
+const head = new THREE.Mesh(new THREE.BoxGeometry(1.67, 1.0, 1.15),
+  [matDominant, matDominant, matDominant, matDominant, headFaceMat, matDominant]);
+head.position.y = 2.25;
+bodyGroup.add(head);
+/* antenna (only robots whose grid has pixels in rows 0-1) */
+const antennaGroup = new THREE.Group();
+{
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.45, 8), matDark);
+  stem.position.y = 0.22; antennaGroup.add(stem);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matAccent);
+  ball.position.y = 0.52; antennaGroup.add(ball);
+  antennaGroup.position.y = 2.75;
+  bodyGroup.add(antennaGroup);
+}
+/* torso + chest panel in the rarity accent color */
+const torso = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 0.8), matDominant);
+torso.position.y = 1.3;
+bodyGroup.add(torso);
+const chest = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.42, 0.08), matAccent);
+chest.position.set(0, 1.35, 0.44);
+bodyGroup.add(chest);
+/* arms: pivot at the shoulder so they can swing while walking */
+function makeArm(side) {
+  const pivot = new THREE.Group();
+  pivot.position.set(0.82 * side, 1.62, 0);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.85, 0.4), matDark);
+  arm.position.y = -0.42;
+  pivot.add(arm);
+  bodyGroup.add(pivot);
+  return pivot;
+}
+const armL = makeArm(-1), armR = makeArm(1);
+/* legs + feet */
+for (const side of [-1, 1]) {
+  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.45), matDark);
+  leg.position.set(0.32 * side, 0.6, 0);
+  bodyGroup.add(leg);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.75), matDark);
+  foot.position.set(0.32 * side, 0.175, 0.05);
+  bodyGroup.add(foot);
+}
 const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24),
   new THREE.MeshBasicMaterial({color: 0x1a2e1a, transparent: true, opacity: 0.28}));
 shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.02;
@@ -249,7 +344,7 @@ function fitPlate() {
   plate.scale.set(mob ? 2.3 : 3.8, mob ? 0.38 : 0.62, 1);
 }
 fitPlate();
-plate.position.y = 3.3;
+plate.position.y = 3.7;
 robot.add(plate);
 scene.add(robot);
 
@@ -473,9 +568,13 @@ function setRarity(key) {
   if (!ROBOTS[key]) return;
   const R = ROBOTS[key];
   current = key;
-  if (spriteMat.map) spriteMat.map.dispose();
-  spriteMat.map = TEX[key] || gridTexture(R);
-  spriteMat.needsUpdate = true;
+  matDominant.color.set(R.dominant);
+  matDark.color.copy(shade(R.dominant, 0.55));
+  matAccent.color.set(R.color);
+  if (headFaceMat.map) headFaceMat.map.dispose();
+  headFaceMat.map = FACE_TEX[key] || gridFaceTexture(R);
+  headFaceMat.needsUpdate = true;
+  antennaGroup.visible = hasAntenna(R);
   drawNameplate(R);
   drawAvatar(R);
   $('whoName').textContent = R.name;
@@ -768,13 +867,18 @@ function tick() {
   } else {
     energy = Math.min(100, energy + 6 * dt);
   }
-  /* sprite faces movement; slight tilt while turning; bob while walking */
+  /* the 3D body faces movement; bob + lean + arm swing while walking */
   let d = faceAngle - robot.rotation.y;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
   robot.rotation.y += d * Math.min(1, dt * 10);
-  spriteMat.rotation = moving ? THREE.MathUtils.clamp(-ix * 0.07, -0.1, 0.1) : 0;
-  sprite.position.y = 1.35 + (moving ? Math.abs(Math.sin(walkPhase)) * 0.16 : 0);
+  const bobT = moving ? Math.abs(Math.sin(walkPhase)) * 0.09 : 0;
+  bodyGroup.position.y += (bobT - bodyGroup.position.y) * Math.min(1, dt * 12);
+  const leanT = moving ? 0.08 : 0;
+  bodyGroup.rotation.x += (leanT - bodyGroup.rotation.x) * Math.min(1, dt * 8);
+  const swingT = moving ? Math.sin(walkPhase) * 0.55 : 0;
+  armL.rotation.x += (swingT - armL.rotation.x) * Math.min(1, dt * 10);
+  armR.rotation.x += (-swingT - armR.rotation.x) * Math.min(1, dt * 10);
   const shScale = 1 - Math.max(0, robot.position.y) * 0.06;
   shadow.scale.setScalar(Math.max(0.5, shScale));
   /* vertical: jump / fly / gravity */
@@ -827,6 +931,7 @@ window.__game = {
   robot, setRarity, applyCheat, completeMission, collidesAt,
   teleport(x, z) { robot.position.set(x, 0, z); },
   setCamYaw(v) { camYaw = v; camOffset = 0; },
+  setFacing(a) { faceAngle = a; },
   get colliders() { return COLLIDERS.length; },
   get joyVec() { return {x: joy.x, y: joy.y, active: joy.active}; },
   get rarity() { return current; },
