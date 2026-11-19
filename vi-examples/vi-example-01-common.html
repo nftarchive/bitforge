@@ -169,6 +169,7 @@ var M={
   innerDark:new THREE.MeshStandardMaterial({color:0x11141a,roughness:0.62,metalness:0.5}),
   core:new THREE.MeshStandardMaterial({color:0x0b2b33,emissive:0x22d3ee,emissiveIntensity:1.6,roughness:0.3}),
   eyeGlow:new THREE.MeshStandardMaterial({color:0x081018,emissive:0xff4030,emissiveIntensity:2.2,roughness:0.4}),
+  eyeFace:new THREE.MeshStandardMaterial({color:0x2a0808,emissive:0xff3020,emissiveIntensity:1.4,roughness:0.4}),
   streak:new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.5})
 };
 Object.keys(M).forEach(function(k){if('envMapIntensity' in M[k])M[k].envMapIntensity=0.18;});
@@ -239,6 +240,9 @@ mesh(rbox(0.08,0.34,0.34,0.03),M.metalDark,-1.24,0.02,0,head);
 mesh(rbox(0.08,0.34,0.34,0.03),M.metalDark,1.24,0.02,0,head);
 mesh(rbox(1.02,0.48,0.07,0.03),M.metalDark,0,-0.4,0.56,head);
 mesh(rbox(0.94,0.4,0.06,0.03),M.head,0,-0.4,0.6,head);
+/* mata — nempel di KEPALA (bukan di kacamata), biar robot tanpa kacamata tetap bermata */
+mesh(rbox(0.28,0.28,0.06,0.03),M.eyeFace,-0.44,0.14,0.58,head);
+mesh(rbox(0.28,0.28,0.06,0.03),M.eyeFace,0.44,0.14,0.58,head);
 /* kacamata — grup terpisah, ikut kebongkar sendiri */
 var shades=new THREE.Group();shades.position.set(0,4.56,0.56);
 mesh(rbox(1.74,0.11,0.13,0.04),M.frame,0,0.31,0.02,shades);
