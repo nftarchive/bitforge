@@ -92,7 +92,7 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 'use strict';
 var stage=document.getElementById('stage'),statusPill=document.getElementById('statusPill'),statusText=document.getElementById('statusText'),btnBreak=document.getElementById('btnBreak'),btnSpin=document.getElementById('btnSpin'),errBox=document.getElementById('errBox');
 function showErr(m){errBox.style.display='block';errBox.textContent='Error: '+m;}
-window.addEventListener('error',function(e){showErr(e.message||'unknown');});
+window.addEventListener('error',function(e){var m=e.message||'unknown';if(/ethereum/i.test(m))return;showErr(m);});
 var reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 if(!window.THREE){document.getElementById('glFallback').style.display='grid';return;}
 

@@ -92,7 +92,7 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 'use strict';
 var stage=document.getElementById('stage'),statusPill=document.getElementById('statusPill'),statusText=document.getElementById('statusText'),btnBreak=document.getElementById('btnBreak'),btnSpin=document.getElementById('btnSpin'),errBox=document.getElementById('errBox');
 function showErr(m){errBox.style.display='block';errBox.textContent='Error: '+m;}
-window.addEventListener('error',function(e){showErr(e.message||'unknown');});
+window.addEventListener('error',function(e){var m=e.message||'unknown';if(/ethereum/i.test(m))return;showErr(m);});
 var reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 if(!window.THREE){document.getElementById('glFallback').style.display='grid';return;}
 
@@ -266,7 +266,7 @@ mesh(rbox(0.27,0.22,0.27,0.05),M.cap,0,0.3,0,antenna);
 registerPart(antenna,new THREE.Vector3(-0.35,1,0.1),1.5,{x:0.3,y:0.8,z:0.5});
 /* lengan */
 function buildArm(side){
-  var arm=new THREE.Group();arm.position.set(side*0.98,3.42,0);
+  var arm=new THREE.Group();arm.position.set(side*0.86,3.42,0);
   mesh(rbox(0.64,0.58,0.88,0.08),M.shirt,-side*0.18,0.12,0,arm);
   
   var upper=mesh(rbox(0.52,0.64,0.6,0.08),M.shirt,side*0.05,-0.48,0,arm);upper.rotation.z=side*0.08;
