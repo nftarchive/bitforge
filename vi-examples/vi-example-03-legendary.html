@@ -221,14 +221,14 @@ mesh(rbox(1.68,0.24,1.04,0.06),M.head,0,2.0,0,torso);
 mesh(rbox(1.15,1.2,0.1,0.05),M.head,0,2.82,-0.48,torso);
 registerPart(torso,new THREE.Vector3(0,-0.15,0),0.16,{x:0,y:0,z:0});
 /* rantai */
-var chain=new THREE.Group();chain.position.set(0,0,0);
+var chain=new THREE.Group();chain.position.set(0,3.3,0.5);
 var linkGeo=new THREE.TorusGeometry(0.105,0.042,10,20);
 var chainLinks=[];
 for(var li=0;li<11;li++){
   var tt=li/10;
   var lx=-0.55+1.1*tt;
-  var ly=3.04+0.5*Math.pow(Math.abs(tt-0.5)*2,1.6);
-  var lz=0.48+0.07*Math.sin(Math.PI*tt);
+  var ly=3.04+0.5*Math.pow(Math.abs(tt-0.5)*2,1.6)-3.3;
+  var lz=0.48+0.07*Math.sin(Math.PI*tt)-0.5;
   var link=mesh(linkGeo,M.chain,lx,ly,lz,chain);
   link.rotation.z=(0.5-tt)*1.15;
   if(li%2===0)link.rotation.y=Math.PI/2;
@@ -405,7 +405,7 @@ window.addEventListener('resize',resize);resize();
 var lblLayer=document.getElementById('lblLayer');
 var lblSvg=document.getElementById('lblSvg');
 var LABELS=[
- {t:'CHAIN',part:chain,at:[0,3.35,0.55],dx:-160,dy:40},
+ {t:'CHAIN',part:chain,at:[0,0.05,0.05],dx:-160,dy:40},
  {t:'SUNGLASSES',part:shades,at:[0,0,0],dx:140,dy:-40},
  {t:'ANTENNA',part:antenna,at:[0,0.3,0],dx:-130,dy:-50},
  {t:'CHIP',part:inner,at:[0,4.3,0.3],dx:-150,dy:-40},

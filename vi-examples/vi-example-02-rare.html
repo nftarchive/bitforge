@@ -221,14 +221,14 @@ mesh(new THREE.BoxGeometry(0.05,1.42,0.04),M.metalDark,0.68,2.78,0.42,torso);
 mesh(rbox(1.15,1.2,0.1,0.05),M.shirt,0,2.82,-0.48,torso);
 registerPart(torso,new THREE.Vector3(0,-0.15,0),0.16,{x:0,y:0,z:0});
 /* rantai */
-var chain=new THREE.Group();chain.position.set(0,0,0);
+var chain=new THREE.Group();chain.position.set(0,3.3,0.5);
 var linkGeo=new THREE.TorusGeometry(0.105,0.042,10,20);
 var chainLinks=[];
 for(var li=0;li<11;li++){
   var tt=li/10;
   var lx=-0.55+1.1*tt;
-  var ly=3.04+0.5*Math.pow(Math.abs(tt-0.5)*2,1.6);
-  var lz=0.48+0.07*Math.sin(Math.PI*tt);
+  var ly=3.04+0.5*Math.pow(Math.abs(tt-0.5)*2,1.6)-3.3;
+  var lz=0.48+0.07*Math.sin(Math.PI*tt)-0.5;
   var link=mesh(linkGeo,M.chain,lx,ly,lz,chain);
   link.rotation.z=(0.5-tt)*1.15;
   if(li%2===0)link.rotation.y=Math.PI/2;
