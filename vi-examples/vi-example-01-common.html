@@ -281,8 +281,8 @@ function buildArm(side){
   return arm;
 }
 var armL=buildArm(-1),armR=buildArm(1);
-registerPart(armL,new THREE.Vector3(-1,0.25,0.25),1.0,{x:0.4,y:0,z:0.9});
-registerPart(armR,new THREE.Vector3(1,0.25,0.25),1.0,{x:0.4,y:0,z:-0.9});
+registerPart(armL,new THREE.Vector3(-1,0.25,0.25),1.0,{x:0.4,y:0,z:-0.9});
+registerPart(armR,new THREE.Vector3(1,0.25,0.25),1.0,{x:0.4,y:0,z:0.9});
 /* kaki */
 function buildLeg(side){
   var leg=new THREE.Group();leg.position.set(side*0.42,1.95,0);
