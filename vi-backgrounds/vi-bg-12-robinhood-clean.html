@@ -394,7 +394,7 @@ function resize(){
   var h=stage.clientHeight||window.innerHeight;
   renderer.setSize(w,h);
   var aspect=w/h;camera.aspect=aspect;
-  var dist=aspect>=1?13.2:Math.min(16.5,13.2/aspect*0.92);
+  var dist=aspect>=1?13.2:Math.min(24,13.2/aspect*0.92);
   camera.position.set(dist*0.24,3.3,dist*0.97);
   camera.lookAt(0,2.75,0);
   camera.updateProjectionMatrix();
