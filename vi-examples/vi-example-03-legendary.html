@@ -151,7 +151,7 @@ function makeHashTexture(bg,fg){
   g.textAlign='center';g.textBaseline='middle';g.fillText('#1',64,68);
   var tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return tex;
 }
-var R={headBase:'#a9713f',headGlyph:['#00e5ff','#a855f7','#ef4444','#22c55e'],shirtBase:'#e8edf2',shirtGlyph:['#0d0906','#1c1005','#000000'],pantsBase:'#3a2a5c',pantsGlyph:['#07090c','#e8edf2','#0d0803','#05070a'],jacketBase:'#8a6d1f',jacketGlyph:['#ffd88a','#160a01','#ffb03a','#0d0500'],bootBase:'#8a6d1f',bootGlyph:['#ffd88a','#160a01','#ffb03a']};
+var R={headBase:'#6b4423',headGlyph:['#00e5ff','#a855f7','#ef4444','#22c55e'],shirtBase:'#e8edf2',shirtGlyph:['#0d0906','#1c1005','#000000'],pantsBase:'#3a2a5c',pantsGlyph:['#07090c','#e8edf2','#0d0803','#05070a'],jacketBase:'#8a6d1f',jacketGlyph:['#ffd88a','#160a01','#ffb03a','#0d0500'],bootBase:'#8a6d1f',bootGlyph:['#ffd88a','#160a01','#ffb03a']};
 var T={head:makeCodeTexture(R.headBase,R.headGlyph,111,false),shirt:makeCodeTexture(R.shirtBase,R.shirtGlyph,222,false),pants:makeCodeTexture(R.pantsBase,R.pantsGlyph,333,false),jacket:makeCodeTexture(R.jacketBase,R.jacketGlyph,444,true),boot:makeCodeTexture(R.bootBase,R.bootGlyph,555,true)};
 T.head.repeat.set(0.8,0.72);T.shirt.repeat.set(0.8,0.9);T.pants.repeat.set(0.78,0.85);T.jacket.repeat.set(0.9,0.9);T.boot.repeat.set(0.78,0.72);
 var M={
