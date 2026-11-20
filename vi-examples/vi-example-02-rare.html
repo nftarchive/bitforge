@@ -235,7 +235,7 @@ for(var li=0;li<11;li++){
   chainLinks.push(link);
 }
 chain.visible=false;
-registerPart(chain,new THREE.Vector3(0,0.3,1),0.4,{x:0.7,y:0.4,z:0});
+registerPart(chain,new THREE.Vector3(0,0.3,1),0.2,{x:0.7,y:0.4,z:0});
 /* kepala kotak */
 var head=new THREE.Group();head.position.set(0,4.42,0);
 mesh(rbox(1.9,1.32,1.12,0.14),M.head,0,0,0,head);
@@ -310,25 +310,26 @@ var cableDefs=[
   {part:legR,offset:new THREE.Vector3(-0.12,0.2,0),from:new THREE.Vector3(0.3,2.0,0),color:0x2e6fd2,sag:0.22}
 ];
 var cables=[];
-/* lilitan tembaga: tekstur garis diagonal = kumparan melilit kabel */
-function makeCopperTexture(){
+/* lilitan spiral (kabel telepon): tekstur garis diagonal = kumparan melilit kabel */
+function makeCoilTexture(base,dark,light){
   var cv=document.createElement('canvas');cv.width=128;cv.height=128;
   var g=cv.getContext('2d');
-  g.fillStyle='#b87333';g.fillRect(0,0,128,128);
-  /* garis diagonal per tile = satu lilitan heliks; repeat.x=8 -> 8 lilitan */
-  g.strokeStyle='#5a3015';g.lineWidth=22;g.lineCap='round';
+  g.fillStyle=base;g.fillRect(0,0,128,128);
+  /* garis diagonal per tile = satu lilitan heliks; repeat.x=16 -> 16 lilitan rapat */
+  g.strokeStyle=dark;g.lineWidth=22;g.lineCap='round';
   g.beginPath();g.moveTo(0,0);g.lineTo(128,128);g.stroke();
   g.beginPath();g.moveTo(0,-128);g.lineTo(128,0);g.stroke();
-  g.strokeStyle='#e8a85c';g.lineWidth=6;
+  g.strokeStyle=light;g.lineWidth=6;
   g.beginPath();g.moveTo(14,0);g.lineTo(142,128);g.stroke();
   g.beginPath();g.moveTo(14,-128);g.lineTo(142,0);g.stroke();
   var tx=new THREE.CanvasTexture(cv);
-  tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(8,1);
+  tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(16,1);
   return tx;
 }
-var copperMat=new THREE.MeshStandardMaterial({map:makeCopperTexture(),roughness:0.4,metalness:0.6});
+var coilMat=new THREE.MeshStandardMaterial({map:makeCoilTexture('#111111','#000000','#3d3d3d'),roughness:0.55,metalness:0.15});
+var coilMatRed=new THREE.MeshStandardMaterial({map:makeCoilTexture('#d8402e','#7a1a0e','#ff8a6a'),roughness:0.55,metalness:0.15});
 cableDefs.forEach(function(def){
-  var mat=(def.part===head)?new THREE.MeshStandardMaterial({color:def.color,roughness:0.55,metalness:0.15}):copperMat;
+  var mat=(def.part===head)?coilMatRed:coilMat;
   var m=new THREE.Mesh(new THREE.BufferGeometry(),mat);
   m.castShadow=true;m.visible=false;robot.add(m);
   cables.push({def:def,mesh:m});
