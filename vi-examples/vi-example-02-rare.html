@@ -50,6 +50,9 @@ button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--navy)}butt
 footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;text-transform:uppercase;font-weight:600;border-top:1.5px solid var(--navy2);padding-top:10px}
 .webgl-fallback{display:none;position:absolute;inset:0;place-items:center;text-align:center;padding:20px;font-size:13px;line-height:1.7;color:var(--muted)}
 #errBox{display:none;position:absolute;left:10px;right:10px;top:10px;background:#7a1610;color:#fff;font-size:12px;line-height:1.5;padding:8px 10px;z-index:50;white-space:pre-wrap}
+#lblLayer{position:absolute;inset:0;pointer-events:none;z-index:30;opacity:0;display:none}
+#lblLayer svg{position:absolute;inset:0;width:100%;height:100%}
+.lbl-chip{position:absolute;transform:translate(-50%,-50%);background:var(--navy);color:#fff;font-weight:700;font-size:11px;letter-spacing:.08em;padding:5px 9px;border:1.5px solid #fff;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.35)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -70,6 +73,7 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 <div class="stage" id="stage" tabindex="0" role="button" aria-label="Robot BitForge VI 3D. Seret ke samping untuk memutar, ketuk untuk membongkar atau merakit.">
 <div class="webgl-fallback" id="glFallback">WebGL tidak tersedia di browser ini,<br>jadi robot 3D tidak bisa ditampilkan.</div>
 <div id="errBox"></div>
+<div id="lblLayer"><svg id="lblSvg" aria-hidden="true"></svg></div>
 </div>
 <p class="hint"><b>Seret</b> buat muter robotnya, <b>ketuk</b> buat bongkar — kepala, lengan &amp; kaki misah, kabel + inti di dalamnya kelihatan. Ketuk lagi buat rakit.</p>
 <div class="controls"><button type="button" id="btnBreak">Bongkar</button><button type="button" id="btnSpin" class="secondary">Putar 180°</button></div>
@@ -274,7 +278,7 @@ function buildArm(side){
   var upper=mesh(rbox(0.52,0.64,0.6,0.08),M.jacket,side*0.05,-0.48,0,arm);upper.rotation.z=side*0.08;
   mesh(rbox(0.56,0.2,0.64,0.05),M.accent,side*0.1,-0.88,0,arm);
   mesh(rbox(0.46,0.44,0.52,0.07),M.head,side*0.12,-1.15,0,arm);
-  var hand=new THREE.Group();hand.position.set(side*0.13,-1.52,0.02);arm.add(hand);
+  var hand=new THREE.Group();hand.position.set(side*0.13,-1.40,0.02);arm.add(hand);
   mesh(rbox(0.4,0.36,0.33,0.07),M.head,0,0,0,hand);
   for(var f=-1;f<=1;f++){var fin=mesh(rbox(0.11,0.28,0.12,0.04),M.head,f*0.13,-0.29,0.03,hand);fin.rotation.x=0.45;}
   var thumb=mesh(rbox(0.11,0.24,0.12,0.04),M.head,-side*0.24,-0.13,0.1,hand);thumb.rotation.z=side*0.5;
@@ -384,6 +388,42 @@ function resize(){
 }
 window.addEventListener('resize',resize);resize();
 
+/* ---------- label pas kebongkar (muncul + ngikutin part) ---------- */
+var lblLayer=document.getElementById('lblLayer');
+var lblSvg=document.getElementById('lblSvg');
+var LABELS=[
+ {t:'ANTENA',part:antenna,at:[0,0.3,0],dx:-130,dy:-50},
+ {t:'CIP LEHER',part:torso,at:[0,3.62,0.35],dx:-150,dy:-40},
+ {t:'INTI',part:inner,at:[0,2.85,0.3],dx:150,dy:50}
+];
+var lblEls=LABELS.map(function(L){
+  var ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ln.setAttribute('stroke','#c93a2e');ln.setAttribute('stroke-width','2');
+  var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('r','4');dot.setAttribute('fill','#c93a2e');dot.setAttribute('stroke','#fff');dot.setAttribute('stroke-width','1.5');
+  lblSvg.appendChild(ln);lblSvg.appendChild(dot);
+  var chip=document.createElement('div');chip.className='lbl-chip';chip.textContent=L.t;lblLayer.appendChild(chip);
+  return {line:ln,dot:dot,chip:chip};
+});
+var _lv=new THREE.Vector3();
+function updateLabels(){
+  var w=stage.clientWidth||1,h=stage.clientHeight||1;
+  LABELS.forEach(function(L,i){
+    var el=lblEls[i];
+    _lv.set(L.at[0],L.at[1],L.at[2]);
+    L.part.localToWorld(_lv);
+    _lv.project(camera);
+    if(_lv.z>1){el.line.style.display='none';el.dot.style.display='none';el.chip.style.display='none';return;}
+    var x=(_lv.x*0.5+0.5)*w,y=(-_lv.y*0.5+0.5)*h;
+    var cx=Math.max(58,Math.min(w-58,x+L.dx)),cy=Math.max(16,Math.min(h-16,y+L.dy));
+    el.line.style.display='';el.dot.style.display='';el.chip.style.display='';
+    el.line.setAttribute('x1',cx);el.line.setAttribute('y1',cy);
+    el.line.setAttribute('x2',x);el.line.setAttribute('y2',y);
+    el.dot.setAttribute('cx',x);el.dot.setAttribute('cy',y);
+    el.chip.style.left=cx+'px';el.chip.style.top=cy+'px';
+  });
+}
+
 /* ---------- animasi ---------- */
 function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 var clock=new THREE.Clock();
@@ -417,6 +457,8 @@ function animate(){
       chainLinks.forEach(function(l,i){l.rotation.x=Math.sin(t*1.8+i*0.6)*0.06;});
     }
     renderer.render(scene,camera);
+    if(explodeCur>0.03){lblLayer.style.display='block';lblLayer.style.opacity=explodeCur;updateLabels();}
+    else if(lblLayer.style.display!=='none'){lblLayer.style.display='none';}
     var now=performance.now();frameAcc+=now-lastNow;lastNow=now;frameCount++;
     if(frameCount>=30){var avg=frameAcc/frameCount;frameAcc=0;frameCount=0;if(avg>34&&prIdx<prLevels.length-1){prIdx++;renderer.setPixelRatio(prLevels[prIdx]);resize();}}
   }catch(err){showErr(err.message||String(err));}
