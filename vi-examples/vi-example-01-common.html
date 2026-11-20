@@ -273,10 +273,10 @@ function buildArm(side){
   var arm=new THREE.Group();arm.position.set(side*0.98,3.42,0);
   mesh(rbox(0.64,0.58,0.88,0.08),M.jacket,-side*0.18,0.12,0,arm);
   mesh(rbox(0.66,0.11,0.9,0.04),M.accent,-side*0.18,-0.15,0,arm);
-  var upper=mesh(rbox(0.52,0.64,0.6,0.08),M.jacket,side*0.05,-0.48,0,arm);upper.rotation.z=side*0.08;
+  var upper=mesh(rbox(0.52,0.88,0.6,0.08),M.jacket,side*0.05,-0.52,0,arm);upper.rotation.z=side*0.08;
   mesh(rbox(0.56,0.2,0.64,0.05),M.accent,side*0.1,-0.88,0,arm);
-  mesh(rbox(0.46,0.44,0.52,0.07),M.head,side*0.12,-1.15,0,arm);
-  var hand=new THREE.Group();hand.position.set(side*0.13,-1.40,0.02);arm.add(hand);
+  mesh(rbox(0.46,0.72,0.52,0.07),M.head,side*0.12,-1.24,0,arm);
+  var hand=new THREE.Group();hand.position.set(side*0.13,-1.52,0.02);arm.add(hand);
   mesh(rbox(0.4,0.36,0.33,0.07),M.head,0,0,0,hand);
   for(var f=-1;f<=1;f++){var fin=mesh(rbox(0.11,0.28,0.12,0.04),M.head,f*0.13,-0.29,0.03,hand);fin.rotation.x=0.45;}
   var thumb=mesh(rbox(0.11,0.24,0.12,0.04),M.head,-side*0.24,-0.13,0.1,hand);thumb.rotation.z=side*0.5;
@@ -391,11 +391,11 @@ window.addEventListener('resize',resize);resize();
 var lblLayer=document.getElementById('lblLayer');
 var lblSvg=document.getElementById('lblSvg');
 var LABELS=[
- {t:'RANTAI',part:chain,at:[0,3.35,0.55],dx:-160,dy:40},
- {t:'KACAMATA',part:shades,at:[0,0,0],dx:140,dy:-40},
- {t:'ANTENA',part:antenna,at:[0,0.3,0],dx:-130,dy:-50},
- {t:'CIP LEHER',part:torso,at:[0,3.62,0.35],dx:-150,dy:-40},
- {t:'INTI',part:inner,at:[0,2.85,0.3],dx:150,dy:50}
+ {t:'CHAIN',part:chain,at:[0,3.35,0.55],dx:-160,dy:40},
+ {t:'SUNGLASSES',part:shades,at:[0,0,0],dx:140,dy:-40},
+ {t:'ANTENNA',part:antenna,at:[0,0.3,0],dx:-130,dy:-50},
+ {t:'CHIP',part:torso,at:[0,3.62,0.35],dx:-150,dy:-40},
+ {t:'CORE',part:inner,at:[0,2.85,0.3],dx:150,dy:50}
 ];
 var lblEls=LABELS.map(function(L){
   var ln=document.createElementNS('http://www.w3.org/2000/svg','line');
