@@ -271,7 +271,6 @@ registerPart(antenna,new THREE.Vector3(-0.35,1,0.1),1.5,{x:0.3,y:0.8,z:0.5});
 /* lengan */
 function buildArm(side){
   var arm=new THREE.Group();arm.position.set(side*0.86,3.42,0);
-  
   var upper=mesh(rbox(0.52,0.88,0.6,0.08),M.head,side*0.05,-0.52,0,arm);upper.rotation.z=side*0.08;
   
   mesh(rbox(0.46,0.72,0.52,0.07),M.head,side*0.12,-1.24,0,arm);
