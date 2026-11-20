@@ -157,7 +157,7 @@ var M={
   jacket:new THREE.MeshStandardMaterial({map:T.jacket,roughness:0.86,metalness:0.0}),
   boot:new THREE.MeshStandardMaterial({map:T.boot,roughness:0.82,metalness:0.0}),
   accent:new THREE.MeshStandardMaterial({color:0x5f2d0c,roughness:0.62,metalness:0.05}),
-  frame:new THREE.MeshStandardMaterial({color:0x6e3a14,roughness:0.42,metalness:0.15}),
+  frame:new THREE.MeshStandardMaterial({color:0x17181c,roughness:0.42,metalness:0.15}),
   lens:new THREE.MeshPhysicalMaterial({color:0x050506,roughness:0.06,metalness:0.1,clearcoat:1,clearcoatRoughness:0.06}),
   chain:new THREE.MeshStandardMaterial({color:0xd18a00,roughness:0.24,metalness:0.9}),
   sole:new THREE.MeshStandardMaterial({color:0x22262c,roughness:0.6,metalness:0.25}),
@@ -286,9 +286,9 @@ function buildLeg(side){
   var leg=new THREE.Group();leg.position.set(side*0.42,1.95,0);
   mesh(rbox(0.72,1.05,0.78,0.1),M.pants,0,-0.45,0,leg);
   mesh(rbox(0.18,0.42,0.56,0.05),M.pants,side*0.41,-0.48,0,leg);
-  mesh(rbox(0.2,0.17,0.58,0.05),M.accent,side*0.41,-0.24,0,leg);
+  mesh(rbox(0.2,0.17,0.58,0.05),M.pants,side*0.41,-0.24,0,leg);
   mesh(rbox(0.66,0.52,0.7,0.08),M.boot,0,-1.15,0,leg);
-  mesh(rbox(0.7,0.15,0.76,0.04),M.accent,0,-0.95,0,leg);
+  mesh(rbox(0.7,0.15,0.76,0.04),M.boot,0,-0.95,0,leg);
   mesh(rbox(0.68,0.34,0.98,0.09),M.boot,0,-1.6,0.1,leg);
   mesh(rbox(0.64,0.3,0.5,0.08),M.boot,0,-1.66,0.48,leg);
   mesh(rbox(0.74,0.16,1.14,0.04),M.sole,0,-1.86,0.12,leg);
