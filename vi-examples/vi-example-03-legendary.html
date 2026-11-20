@@ -208,12 +208,12 @@ mesh(rbox(0.32,1.62,0.98,0.08),M.shirt,-0.72,2.78,0,torso);
 mesh(rbox(0.32,1.62,0.98,0.08),M.shirt,0.72,2.78,0,torso);
 var jpL=mesh(rbox(0.36,1.52,0.15,0.05),M.shirt,-0.62,2.74,0.4,torso);jpL.rotation.y=0.3;
 var jpR=mesh(rbox(0.36,1.52,0.15,0.05),M.shirt,0.62,2.74,0.4,torso);jpR.rotation.y=-0.3;
-var lapL=mesh(rbox(0.3,0.72,0.1,0.04),M.accent,-0.5,3.28,0.46,torso);lapL.rotation.set(-0.12,0.42,0.3);
-var lapR=mesh(rbox(0.3,0.72,0.1,0.04),M.accent,0.5,3.28,0.46,torso);lapR.rotation.set(-0.12,-0.42,-0.3);
-mesh(rbox(1.24,0.3,0.16,0.05),M.accent,0,3.6,-0.34,torso);
+
+
+
 mesh(rbox(1.68,0.24,1.04,0.06),M.shirt,0,2.0,0,torso);
-mesh(new THREE.BoxGeometry(0.05,1.42,0.04),M.metalDark,-0.68,2.78,0.42,torso);
-mesh(new THREE.BoxGeometry(0.05,1.42,0.04),M.metalDark,0.68,2.78,0.42,torso);
+
+
 mesh(rbox(1.15,1.2,0.1,0.05),M.shirt,0,2.82,-0.48,torso);
 registerPart(torso,new THREE.Vector3(0,-0.15,0),0.16,{x:0,y:0,z:0});
 /* rantai */
@@ -268,9 +268,9 @@ registerPart(antenna,new THREE.Vector3(-0.35,1,0.1),1.5,{x:0.3,y:0.8,z:0.5});
 function buildArm(side){
   var arm=new THREE.Group();arm.position.set(side*0.98,3.42,0);
   mesh(rbox(0.64,0.58,0.88,0.08),M.shirt,-side*0.18,0.12,0,arm);
-  mesh(rbox(0.66,0.11,0.9,0.04),M.accent,-side*0.18,-0.15,0,arm);
+  
   var upper=mesh(rbox(0.52,0.64,0.6,0.08),M.shirt,side*0.05,-0.48,0,arm);upper.rotation.z=side*0.08;
-  mesh(rbox(0.56,0.2,0.64,0.05),M.accent,side*0.1,-0.88,0,arm);
+  
   mesh(rbox(0.46,0.44,0.52,0.07),M.head,side*0.12,-1.15,0,arm);
   var hand=new THREE.Group();hand.position.set(side*0.13,-1.52,0.02);arm.add(hand);
   mesh(rbox(0.4,0.36,0.33,0.07),M.head,0,0,0,hand);
