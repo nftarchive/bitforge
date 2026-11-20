@@ -302,7 +302,6 @@ registerPart(legR,new THREE.Vector3(0.55,-0.75,0.3),0.95,{x:0.8,y:-0.2,z:-0.4});
 /* kabel — kelihatan pas pecah */
 var cableDefs=[
   {part:head,offset:new THREE.Vector3(0,-0.6,0),from:new THREE.Vector3(0,3.55,0),color:0xd8402e,sag:0.25},
-  {part:head,offset:new THREE.Vector3(0.4,-0.55,-0.2),from:new THREE.Vector3(0.2,3.5,-0.1),color:0x2e6fd2,sag:0.35},
   {part:armL,offset:new THREE.Vector3(-0.05,-0.12,0.15),from:new THREE.Vector3(-0.8,3.3,0),color:0xe8b93b,sag:0.3},
   {part:armR,offset:new THREE.Vector3(0.05,-0.12,0.15),from:new THREE.Vector3(0.8,3.3,0),color:0x3fae5a,sag:0.3},
   {part:legL,offset:new THREE.Vector3(0.12,0.2,0),from:new THREE.Vector3(-0.3,2.0,0),color:0xd8402e,sag:0.22},
@@ -310,8 +309,25 @@ var cableDefs=[
   {part:chain,offset:new THREE.Vector3(0,3.05,0.52),from:new THREE.Vector3(0,3.35,0.4),color:0xe8b93b,sag:0.4}
 ];
 var cables=[];
+/* lilitan tembaga: tekstur garis diagonal = kumparan melilit kabel */
+function makeCopperTexture(){
+  var cv=document.createElement('canvas');cv.width=128;cv.height=128;
+  var g=cv.getContext('2d');
+  g.fillStyle='#b87333';g.fillRect(0,0,128,128);
+  /* garis diagonal per tile = satu lilitan heliks; repeat.x=8 -> 8 lilitan */
+  g.strokeStyle='#5a3015';g.lineWidth=22;g.lineCap='round';
+  g.beginPath();g.moveTo(0,0);g.lineTo(128,128);g.stroke();
+  g.beginPath();g.moveTo(0,-128);g.lineTo(128,0);g.stroke();
+  g.strokeStyle='#e8a85c';g.lineWidth=6;
+  g.beginPath();g.moveTo(14,0);g.lineTo(142,128);g.stroke();
+  g.beginPath();g.moveTo(14,-128);g.lineTo(142,0);g.stroke();
+  var tx=new THREE.CanvasTexture(cv);
+  tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(8,1);
+  return tx;
+}
+var copperMat=new THREE.MeshStandardMaterial({map:makeCopperTexture(),roughness:0.4,metalness:0.6});
 cableDefs.forEach(function(def){
-  var mat=new THREE.MeshStandardMaterial({color:def.color,roughness:0.55,metalness:0.15});
+  var mat=(def.part===head)?new THREE.MeshStandardMaterial({color:def.color,roughness:0.55,metalness:0.15}):copperMat;
   var m=new THREE.Mesh(new THREE.BufferGeometry(),mat);
   m.castShadow=true;m.visible=false;robot.add(m);
   cables.push({def:def,mesh:m});
@@ -327,7 +343,7 @@ function updateCables(amount){
     _mid.lerpVectors(_v1,_v2,0.5);_mid.y-=def.sag*amount;_mid.z+=0.08*amount;
     var curve=new THREE.QuadraticBezierCurve3(_v1.clone(),_mid.clone(),_v2.clone());
     c.mesh.geometry.dispose();
-    c.mesh.geometry=new THREE.TubeGeometry(curve,14,0.035,7,false);
+    c.mesh.geometry=new THREE.TubeGeometry(curve,14,0.045,7,false);
   });
 }
 
