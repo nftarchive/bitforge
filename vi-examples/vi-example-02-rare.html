@@ -235,7 +235,7 @@ for(var li=0;li<11;li++){
   chainLinks.push(link);
 }
 chain.visible=false;
-registerPart(chain,new THREE.Vector3(0,0.3,1),0.8,{x:0.7,y:0.4,z:0});
+registerPart(chain,new THREE.Vector3(0,0.3,1),0.4,{x:0.7,y:0.4,z:0});
 /* kepala kotak */
 var head=new THREE.Group();head.position.set(0,4.42,0);
 mesh(rbox(1.9,1.32,1.12,0.14),M.head,0,0,0,head);
@@ -303,11 +303,11 @@ registerPart(legL,new THREE.Vector3(-0.55,-0.75,0.3),0.95,{x:0.8,y:0.2,z:0.4});
 registerPart(legR,new THREE.Vector3(0.55,-0.75,0.3),0.95,{x:0.8,y:-0.2,z:-0.4});
 /* kabel — kelihatan pas pecah */
 var cableDefs=[
-  {part:head,offset:new THREE.Vector3(0,-0.6,0),from:new THREE.Vector3(0,3.55,0),color:0xd8402e,sag:0.25},
+  {part:head,offset:new THREE.Vector3(0,-0.6,0),from:new THREE.Vector3(0,3.55,0),color:0xd8402e,sag:0.25,noSpin:true},
   {part:armL,offset:new THREE.Vector3(-0.05,-0.12,0.15),from:new THREE.Vector3(-0.8,3.3,0),color:0xe8b93b,sag:0.3},
   {part:armR,offset:new THREE.Vector3(0.05,-0.12,0.15),from:new THREE.Vector3(0.8,3.3,0),color:0x3fae5a,sag:0.3},
   {part:legL,offset:new THREE.Vector3(0.12,0.2,0),from:new THREE.Vector3(-0.3,2.0,0),color:0xd8402e,sag:0.22},
-  {part:legR,offset:new THREE.Vector3(-0.12,0.2,0),from:new THREE.Vector3(0.3,2.0,0),color:0x2e6fd2,sag:0.22},
+  {part:legR,offset:new THREE.Vector3(-0.12,0.2,0),from:new THREE.Vector3(0.3,2.0,0),color:0x2e6fd2,sag:0.22}
 ];
 var cables=[];
 /* lilitan tembaga: tekstur garis diagonal = kumparan melilit kabel */
@@ -340,7 +340,7 @@ function updateCables(amount){
     c.mesh.visible=true;
     var def=c.def;
     _v1.copy(def.from);
-    _v2.copy(def.offset).applyEuler(def.part.rotation).add(def.part.position);
+    _v2.copy(def.offset);if(!def.noSpin)_v2.applyEuler(def.part.rotation);_v2.add(def.part.position);
     _mid.lerpVectors(_v1,_v2,0.5);_mid.y-=def.sag*amount;_mid.z+=0.08*amount;
     var curve=new THREE.QuadraticBezierCurve3(_v1.clone(),_mid.clone(),_v2.clone());
     c.mesh.geometry.dispose();
