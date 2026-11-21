@@ -246,27 +246,48 @@ mesh(rbox(0.08,0.34,0.34,0.03),M.metalDark,1.24,0.02,0,head);
 mesh(rbox(1.02,0.48,0.07,0.03),M.metalDark,0,-0.4,0.56,head);
 mesh(rbox(0.94,0.4,0.06,0.03),M.head,0,-0.4,0.6,head);
 /* mata — varian (showcase): nempel di KEPALA, ganti via tombol di bawah */
-function makeEyeTexture(sym){
+/* panel wajah bersih (tanpa code) biar mata nempel rapi, bukan tempelan */
+mesh(rbox(1.65,0.8,0.04,0.03),new THREE.MeshStandardMaterial({color:0x8f99a3,roughness:0.58,metalness:0.06}),0,0.14,0.58,head);
+/* warna per varian mata — $ = hijau tua (juragan) */
+var EYES={
+  kotak:{box:'#2a0808',sym:'#ff3020'},
+  '$':{box:'#1e6b3a',sym:'#4ade80'},
+  x:{box:'#7a2a00',sym:'#ff7a1a'},
+  '+':{box:'#0b2b33',sym:'#22d3ee'},
+  o:{box:'#1e3a5c',sym:'#4a90d9'},
+  '_':{box:'#5c4a00',sym:'#c9a227'},
+  tri:{box:'#2a0a3a',sym:'#9a3cff'},
+  caret:{box:'#5c0a2e',sym:'#ff1a75'}
+};
+function makeEyeTexture(key){
+  var e=EYES[key];
   var c=document.createElement('canvas');c.width=128;c.height=128;
-  var g=c.getContext('2d');g.clearRect(0,0,128,128);
-  g.strokeStyle='#ff3020';g.fillStyle='#ff3020';g.lineWidth=14;g.lineCap='round';g.lineJoin='round';
-  if(sym==='kotak'){g.fillRect(36,36,56,56);}
-  else if(sym==='$'){g.font='900 84px ui-monospace, Menlo, monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('$',64,70);}
-  else if(sym==='x'){g.beginPath();g.moveTo(38,38);g.lineTo(90,90);g.moveTo(90,38);g.lineTo(38,90);g.stroke();}
-  else if(sym==='+'){g.beginPath();g.moveTo(30,64);g.lineTo(98,64);g.moveTo(64,30);g.lineTo(64,98);g.stroke();}
-  else if(sym==='o'){g.beginPath();g.arc(64,64,26,0,Math.PI*2);g.stroke();}
-  else if(sym==='_'){g.beginPath();g.moveTo(34,88);g.lineTo(94,88);g.stroke();}
-  else if(sym==='tri'){g.beginPath();g.moveTo(64,36);g.lineTo(92,92);g.lineTo(36,92);g.closePath();g.lineWidth=12;g.stroke();}
-  else if(sym==='caret'){g.beginPath();g.moveTo(36,88);g.lineTo(64,40);g.lineTo(92,88);g.stroke();}
+  var g=c.getContext('2d');
+  g.fillStyle=e.box;g.fillRect(0,0,128,128);
+  g.strokeStyle=e.sym;g.fillStyle=e.sym;g.lineWidth=16;g.lineCap='round';g.lineJoin='round';
+  if(key==='kotak'){g.fillRect(32,32,64,64);}
+  else if(key==='$'){g.font='900 88px ui-monospace, Menlo, monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('$',64,70);}
+  else if(key==='x'){g.beginPath();g.moveTo(36,36);g.lineTo(92,92);g.moveTo(92,36);g.lineTo(36,92);g.stroke();}
+  else if(key==='+'){g.beginPath();g.moveTo(28,64);g.lineTo(100,64);g.moveTo(64,28);g.lineTo(64,100);g.stroke();}
+  else if(key==='o'){g.beginPath();g.arc(64,64,28,0,Math.PI*2);g.stroke();}
+  else if(key==='_'){g.beginPath();g.moveTo(32,90);g.lineTo(96,90);g.stroke();}
+  else if(key==='tri'){g.beginPath();g.moveTo(64,34);g.lineTo(94,94);g.lineTo(34,94);g.closePath();g.lineWidth=14;g.stroke();}
+  else if(key==='caret'){g.beginPath();g.moveTo(34,90);g.lineTo(64,38);g.lineTo(94,90);g.stroke();}
   var tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return tex;
 }
 var EYE_SYMS=['kotak','$','x','+','o','_','tri','caret'];
-var EYE_TEX={};EYE_SYMS.forEach(function(s){EYE_TEX[s]=makeEyeTexture(s);});
-var eyeMat=new THREE.MeshBasicMaterial({map:EYE_TEX['kotak'],transparent:true});
-var eyeGeo=new THREE.PlaneGeometry(0.32,0.32);
-var eyeL=new THREE.Mesh(eyeGeo,eyeMat);eyeL.position.set(-0.44,0.14,0.59);head.add(eyeL);
-var eyeR=new THREE.Mesh(eyeGeo,eyeMat);eyeR.position.set(0.44,0.14,0.59);head.add(eyeR);
-function setEyes(sym){eyeMat.map=EYE_TEX[sym];eyeMat.needsUpdate=true;}
+/* mata TIMBUL: box 3D (0.55 x 0.55 x 0.10) — depan = simbol, sisi = warna box */
+var eyeGeo=new THREE.BoxGeometry(0.55,0.55,0.10);
+var eyeMats={};
+EYE_SYMS.forEach(function(k){
+  var e=EYES[k];
+  var front=new THREE.MeshBasicMaterial({map:makeEyeTexture(k)});
+  var side=new THREE.MeshStandardMaterial({color:e.box,roughness:0.4,metalness:0.1,emissive:e.box,emissiveIntensity:0.5});
+  eyeMats[k]=[side,side,side,side,front,side];
+});
+var eyeL=new THREE.Mesh(eyeGeo,eyeMats['kotak']);eyeL.position.set(-0.44,0.14,0.65);eyeL.castShadow=true;head.add(eyeL);
+var eyeR=new THREE.Mesh(eyeGeo,eyeMats['kotak']);eyeR.position.set(0.44,0.14,0.65);eyeR.castShadow=true;head.add(eyeR);
+function setEyes(k){eyeL.material=eyeMats[k];eyeR.material=eyeMats[k];}
 /* kacamata — grup terpisah, ikut kebongkar sendiri */
 var shades=new THREE.Group();shades.position.set(0,4.56,0.56);
 mesh(rbox(1.74,0.11,0.13,0.04),M.frame,0,0.31,0.02,shades);
