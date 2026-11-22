@@ -260,10 +260,13 @@ function eyeSymbolGroup(key){
   function bar(w,h,rz,x,y){var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,D),mat);m.position.set(x,y,0);m.rotation.z=rz||0;m.castShadow=true;g.add(m);}
   if(key==='kotak'){bar(0.4,0.4,0,0,0);}
   else if(key==='$'){
-    bar(0.09,0.42,0,0,0);
-    /* tori dimundurkan z=-0.03: tabung 0.06 tidak boleh tembus lensa (depan lensa z 0.685) */
-    var t1=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t1.position.set(0,0.09,-0.03);t1.rotation.z=Math.PI/2;t1.castShadow=true;g.add(t1);
-    var t2=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t2.position.set(0,-0.09,-0.03);t2.rotation.z=-Math.PI/2;t2.castShadow=true;g.add(t2);
+    /* $ dari BATANG LURUS (bukan torus) biar bentuknya kebaca jelas: S blok + garis vertikal. Torus kegemukan jadi blob. */
+    bar(0.28,0.09,0,0,0.155);      /* atas */
+    bar(0.09,0.16,0,-0.095,0.08);  /* kiri atas */
+    bar(0.28,0.09,0,0,0);          /* tengah */
+    bar(0.09,0.16,0,0.095,-0.08);  /* kanan bawah */
+    bar(0.28,0.09,0,0,-0.155);     /* bawah */
+    bar(0.09,0.50,0,0,0);          /* garis vertikal $ — lebih panjang dari S (0.40) biar jelas ini $, bukan 5 */
   }
   else if(key==='x'){bar(0.5,0.09,Math.PI/4,0,0);bar(0.5,0.09,-Math.PI/4,0,0);}
   else if(key==='+'){bar(0.45,0.09,0,0,0);bar(0.09,0.45,0,0,0);}
