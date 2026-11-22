@@ -75,8 +75,9 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 <div id="errBox"></div>
 <div id="lblLayer"><svg id="lblSvg" aria-hidden="true"></svg></div>
 </div>
-<p class="hint">Pilih mata di bawah — robot tanpa kacamata biar matanya kelihatan. <b>Seret</b> buat muter, <b>ketuk</b> buat bongkar.</p>
+<p class="hint">Pilih mata di bawah — kacamata tampil biar kelihatan nutupin mata atau tidak. Tombol <b>Kacamata</b> buat sembunyikan/munculkan. <b>Seret</b> buat muter, <b>ketuk</b> buat bongkar.</p>
 <div class="controls"><button type="button" id="btnBreak">Bongkar</button><button type="button" id="btnSpin" class="secondary">Putar 180°</button></div>
+<div class="controls"><button type="button" id="btnShades">Kacamata: ON</button></div>
 <div class="controls"><button type="button" data-eye="kotak">Kotak</button><button type="button" data-eye="$">$</button><button type="button" data-eye="x">x</button><button type="button" data-eye="+">+</button><button type="button" data-eye="o">o</button><button type="button" data-eye="_">_</button><button type="button" data-eye="tri">∆</button><button type="button" data-eye="caret">^</button></div>
 </section>
 <div class="col col-right">
@@ -252,7 +253,8 @@ mesh(rbox(1.5,0.65,0.04,0.03),new THREE.MeshStandardMaterial({color:0x8f99a3,rou
 var EYES={kotak:'#ff3020','$':'#1e6b3a',x:'#ff7a1a','+':'#22d3ee',o:'#4a90d9','_':'#c9a227',tri:'#9a3cff',caret:'#ff1a75'};
 var EYE_SYMS=['kotak','$','x','+','o','_','tri','caret'];
 function eyeSymbolGroup(key){
-  var mat=new THREE.MeshStandardMaterial({color:EYES[key],emissive:EYES[key],emissiveIntensity:0.7,roughness:0.4});
+  /* MeshBasicMaterial = warna tampil apa adanya, pekat/solid, tidak kena cahaya */
+  var mat=new THREE.MeshBasicMaterial({color:EYES[key]});
   var g=new THREE.Group();
   var D=0.06;
   function bar(w,h,rz,x,y){var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,D),mat);m.position.set(x,y,0);m.rotation.z=rz||0;m.castShadow=true;g.add(m);}
@@ -295,7 +297,6 @@ var stkL=new THREE.Mesh(stkGeo,M.streak);stkL.position.set(-0.52,0.08,0.135);stk
 var stkR=new THREE.Mesh(stkGeo,M.streak);stkR.position.set(0.38,0.08,0.135);stkR.rotation.z=-0.55;shades.add(stkR);
 registerPart(head,new THREE.Vector3(0,1,0.12),1.1,{x:-0.35,y:0.5,z:0.15});
 registerPart(shades,new THREE.Vector3(0,0.3,1),1.35,{x:-0.6,y:0.4,z:0.2});
-shades.visible=false; /* showcase: tanpa kacamata biar mata kelihatan */
 /* antena — grup terpisah juga */
 var antenna=new THREE.Group();antenna.position.set(-0.58,5.12,0);
 mesh(rbox(0.24,0.1,0.24,0.03),M.antenna,0,0,0,antenna);
@@ -422,6 +423,7 @@ stage.addEventListener('keydown',function(e){
 btnBreak.addEventListener('click',function(){toggleExplode();});
 btnSpin.addEventListener('click',function(){angleTarget+=Math.PI;});
 document.querySelectorAll('[data-eye]').forEach(function(b){b.addEventListener('click',function(){setEyes(b.getAttribute('data-eye'));});});
+var btnShades=document.getElementById('btnShades');btnShades.addEventListener('click',function(){shades.visible=!shades.visible;btnShades.textContent='Kacamata: '+(shades.visible?'ON':'OFF');});
 
 /* ---------- resize / framing ---------- */
 function resize(){
@@ -441,6 +443,7 @@ var lblLayer=document.getElementById('lblLayer');
 var lblSvg=document.getElementById('lblSvg');
 var LABELS=[
  {t:'CHAIN',part:chain,at:[0,0.05,0.05],dx:-160,dy:40},
+ {t:'SUNGLASSES',part:shades,at:[0,0,0],dx:140,dy:-40},
  {t:'ANTENNA',part:antenna,at:[0,0.3,0],dx:-130,dy:-50},
  {t:'CHIP',part:inner,at:[0,4.3,0.3],dx:-150,dy:-40},
  {t:'CORE',part:inner,at:[0,2.85,0.3],dx:150,dy:50}
