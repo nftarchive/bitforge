@@ -69,7 +69,7 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 </section>
 </div>
 <section class="stage-card col-stage" aria-label="Panggung teardown interaktif">
-<div class="stage-top"><span class="fig">EYES — 8 varian mata</span><span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">STATUS: UTUH</span></span></div>
+<div class="stage-top"><span class="fig">EYES — 8 varian mata + Czar</span><span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">STATUS: UTUH</span></span></div>
 <div class="stage" id="stage" tabindex="0" role="button" aria-label="Robot BitForge VI 3D. Seret ke samping untuk memutar, ketuk untuk membongkar atau merakit.">
 <div class="webgl-fallback" id="glFallback">WebGL tidak tersedia di browser ini,<br>jadi robot 3D tidak bisa ditampilkan.</div>
 <div id="errBox"></div>
@@ -78,7 +78,7 @@ footer{margin-top:26px;font-size:10.5px;color:var(--navy);letter-spacing:.08em;d
 <p class="hint">Pilih mata di bawah — kacamata tampil biar kelihatan nutupin mata atau tidak. Tombol <b>Kacamata</b> buat sembunyikan/munculkan. <b>Seret</b> buat muter, <b>ketuk</b> buat bongkar.</p>
 <div class="controls"><button type="button" id="btnBreak">Bongkar</button><button type="button" id="btnSpin" class="secondary">Putar 180°</button></div>
 <div class="controls"><button type="button" id="btnShades">Kacamata: ON</button></div>
-<div class="controls"><button type="button" data-eye="kotak">Kotak</button><button type="button" data-eye="$">$</button><button type="button" data-eye="x">x</button><button type="button" data-eye="+">+</button><button type="button" data-eye="o">o</button><button type="button" data-eye="_">_</button><button type="button" data-eye="tri">∆</button><button type="button" data-eye="caret">^</button></div>
+<div class="controls"><button type="button" data-eye="kotak">Kotak</button><button type="button" data-eye="$">$</button><button type="button" data-eye="x">x</button><button type="button" data-eye="+">+</button><button type="button" data-eye="o">o</button><button type="button" data-eye="_">_</button><button type="button" data-eye="tri">∆</button><button type="button" data-eye="caret">^</button><button type="button" data-eye="czar">Czar</button></div>
 </section>
 <div class="col col-right">
 <section class="box" aria-label="Traits"><h2>TRAITS</h2><ul>
@@ -250,8 +250,8 @@ mesh(rbox(0.94,0.4,0.06,0.03),M.head,0,-0.4,0.6,head);
 /* panel wajah bersih (tanpa code) biar mata nempel rapi */
 mesh(rbox(1.5,0.65,0.04,0.03),new THREE.MeshStandardMaterial({color:0x8f99a3,roughness:0.58,metalness:0.06}),0,0.14,0.58,head);
 /* warna per varian mata — $ = hijau tua (juragan) */
-var EYES={kotak:'#ff3020','$':'#1e6b3a',x:'#ff7a1a','+':'#22d3ee',o:'#4a90d9','_':'#c9a227',tri:'#9a3cff',caret:'#ff1a75'};
-var EYE_SYMS=['kotak','$','x','+','o','_','tri','caret'];
+var EYES={kotak:'#ff3020','$':'#1e6b3a',x:'#ff7a1a','+':'#22d3ee',o:'#4a90d9','_':'#c9a227',tri:'#9a3cff',caret:'#ff1a75',czarX:'#ff2a1a',czarSq:'#22c55e'};
+var EYE_SYMS=['kotak','$','x','+','o','_','tri','caret','czar'];
 function eyeSymbolGroup(key){
   /* MeshBasicMaterial = warna tampil apa adanya, pekat/solid, tidak kena cahaya */
   var mat=new THREE.MeshBasicMaterial({color:EYES[key]});
@@ -273,11 +273,13 @@ function eyeSymbolGroup(key){
   else if(key==='o'){var o=new THREE.Mesh(new THREE.TorusGeometry(0.15,0.045,8,24),mat);o.castShadow=true;g.add(o);}
   else if(key==='_'){bar(0.45,0.09,0,0,0);}
   else if(key==='tri'){var s=new THREE.Shape();s.moveTo(0,0.22);s.lineTo(-0.20,-0.14);s.lineTo(0.20,-0.14);s.closePath();var tr=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:false}),mat);tr.position.z=-D/2;/* pusatkan: extrude 0..0.06 jadi -0.03..0.03, tidak tembus lensa */tr.castShadow=true;g.add(tr);}
-  else if(key==='caret'){bar(0.3,0.09,Math.PI/4,-0.10,-0.02);bar(0.3,0.09,-Math.PI/4,0.10,-0.02);}
+  else if(key==='caret'){bar(0.36,0.09,Math.PI/4,-0.085,-0.02);bar(0.36,0.09,-Math.PI/4,0.085,-0.02);/* batang lebih panjang biar ujung menyambung jadi lancip — 0.3 bikin dua puncak + takik di tengah */}
+  else if(key==='czarX'){bar(0.5,0.09,Math.PI/4,0,0);bar(0.5,0.09,-Math.PI/4,0,0);}
+  else if(key==='czarSq'){bar(0.4,0.4,0,0,0);}
   return g;
 }
 var eyeGroups={};
-EYE_SYMS.forEach(function(k){eyeGroups[k]={L:eyeSymbolGroup(k),R:eyeSymbolGroup(k)};});
+EYE_SYMS.forEach(function(k){if(k==='czar'){eyeGroups[k]={L:eyeSymbolGroup('czarX'),R:eyeSymbolGroup('czarSq')};}else{eyeGroups[k]={L:eyeSymbolGroup(k),R:eyeSymbolGroup(k)};}});/* Czar asimetris: kiri X merah, kanan kotak hijau */
 var eyeL=eyeGroups['kotak'].L;eyeL.position.set(-0.44,0.14,0.63);head.add(eyeL);
 var eyeR=eyeGroups['kotak'].R;eyeR.position.set(0.44,0.14,0.63);head.add(eyeR);
 function setEyes(k){
