@@ -261,14 +261,15 @@ function eyeSymbolGroup(key){
   if(key==='kotak'){bar(0.4,0.4,0,0,0);}
   else if(key==='$'){
     bar(0.09,0.42,0,0,0);
-    var t1=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t1.position.set(0,0.09,0);t1.rotation.z=Math.PI/2;t1.castShadow=true;g.add(t1);
-    var t2=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t2.position.set(0,-0.09,0);t2.rotation.z=-Math.PI/2;t2.castShadow=true;g.add(t2);
+    /* tori dimundurkan z=-0.03: tabung 0.06 tidak boleh tembus lensa (depan lensa z 0.685) */
+    var t1=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t1.position.set(0,0.09,-0.03);t1.rotation.z=Math.PI/2;t1.castShadow=true;g.add(t1);
+    var t2=new THREE.Mesh(new THREE.TorusGeometry(0.10,0.06,8,16,Math.PI),mat);t2.position.set(0,-0.09,-0.03);t2.rotation.z=-Math.PI/2;t2.castShadow=true;g.add(t2);
   }
   else if(key==='x'){bar(0.5,0.09,Math.PI/4,0,0);bar(0.5,0.09,-Math.PI/4,0,0);}
   else if(key==='+'){bar(0.45,0.09,0,0,0);bar(0.09,0.45,0,0,0);}
   else if(key==='o'){var o=new THREE.Mesh(new THREE.TorusGeometry(0.15,0.045,8,24),mat);o.castShadow=true;g.add(o);}
   else if(key==='_'){bar(0.45,0.09,0,0,0);}
-  else if(key==='tri'){var s=new THREE.Shape();s.moveTo(0,0.22);s.lineTo(-0.20,-0.14);s.lineTo(0.20,-0.14);s.closePath();var tr=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:false}),mat);tr.castShadow=true;g.add(tr);}
+  else if(key==='tri'){var s=new THREE.Shape();s.moveTo(0,0.22);s.lineTo(-0.20,-0.14);s.lineTo(0.20,-0.14);s.closePath();var tr=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:false}),mat);tr.position.z=-D/2;/* pusatkan: extrude 0..0.06 jadi -0.03..0.03, tidak tembus lensa */tr.castShadow=true;g.add(tr);}
   else if(key==='caret'){bar(0.3,0.09,Math.PI/4,-0.10,-0.02);bar(0.3,0.09,-Math.PI/4,0.10,-0.02);}
   return g;
 }
