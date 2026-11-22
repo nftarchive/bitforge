@@ -250,7 +250,7 @@ mesh(rbox(0.94,0.4,0.06,0.03),M.head,0,-0.4,0.6,head);
 /* panel wajah bersih (tanpa code) biar mata nempel rapi */
 mesh(rbox(1.5,0.65,0.04,0.03),new THREE.MeshStandardMaterial({color:0x8f99a3,roughness:0.58,metalness:0.06}),0,0.14,0.58,head);
 /* warna per varian mata — $ = hijau tua (juragan) */
-var EYES={kotak:'#ff3020','$':'#1e6b3a',x:'#ff7a1a','+':'#22d3ee',o:'#4a90d9','_':'#c9a227',tri:'#9a3cff',caret:'#ff1a75',czarX:'#ff2a1a',czarSq:'#22c55e'};
+var EYES={kotak:'#ff3020','$':'#16a34a',x:'#ff7a1a','+':'#22d3ee',o:'#3b82f6','_':'#eab308',tri:'#9a3cff',caret:'#ff1a75',czarX:'#ff2a1a',czarSq:'#22c55e'};
 var EYE_SYMS=['kotak','$','x','+','o','_','tri','caret','czar'];
 function eyeSymbolGroup(key){
   /* MeshBasicMaterial = warna tampil apa adanya, pekat/solid, tidak kena cahaya */
@@ -261,20 +261,20 @@ function eyeSymbolGroup(key){
   if(key==='kotak'){bar(0.4,0.4,0,0,0);}
   else if(key==='$'){
     /* $ dari BATANG LURUS (bukan torus) biar bentuknya kebaca jelas: S blok + garis vertikal. Torus kegemukan jadi blob. */
-    bar(0.28,0.09,0,0,0.155);      /* atas */
-    bar(0.09,0.16,0,-0.095,0.08);  /* kiri atas */
-    bar(0.28,0.09,0,0,0);          /* tengah */
-    bar(0.09,0.16,0,0.095,-0.08);  /* kanan bawah */
-    bar(0.28,0.09,0,0,-0.155);     /* bawah */
-    bar(0.09,0.50,0,0,0);          /* garis vertikal $ — lebih panjang dari S (0.40) biar jelas ini $, bukan 5 */
+    bar(0.28,0.10,0,0,0.10);       /* atas — S dipendekin + $ digeser turun 0.04 biar muat di balik lensa */
+    bar(0.10,0.16,0,-0.095,0.03);  /* kiri atas */
+    bar(0.28,0.10,0,0,-0.04);      /* tengah */
+    bar(0.10,0.16,0,0.095,-0.11);  /* kanan bawah */
+    bar(0.28,0.10,0,0,-0.18);      /* bawah */
+    bar(0.10,0.44,0,0,-0.04);      /* garis vertikal $ 0.44 — ujung atas di 4.74, aman di bawah lensa (4.78), tetap nyembul 0.03 dari S biar kebaca $ */
   }
-  else if(key==='x'){bar(0.5,0.09,Math.PI/4,0,0);bar(0.5,0.09,-Math.PI/4,0,0);}
-  else if(key==='+'){bar(0.45,0.09,0,0,0);bar(0.09,0.45,0,0,0);}
-  else if(key==='o'){var o=new THREE.Mesh(new THREE.TorusGeometry(0.15,0.045,8,24),mat);o.castShadow=true;g.add(o);}
-  else if(key==='_'){bar(0.45,0.09,0,0,0);}
-  else if(key==='tri'){var s=new THREE.Shape();s.moveTo(0,0.22);s.lineTo(-0.20,-0.14);s.lineTo(0.20,-0.14);s.closePath();var tr=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:false}),mat);tr.position.z=-D/2;/* pusatkan: extrude 0..0.06 jadi -0.03..0.03, tidak tembus lensa */tr.castShadow=true;g.add(tr);}
-  else if(key==='caret'){bar(0.36,0.09,Math.PI/4,-0.085,-0.02);bar(0.36,0.09,-Math.PI/4,0.085,-0.02);/* batang lebih panjang biar ujung menyambung jadi lancip — 0.3 bikin dua puncak + takik di tengah */}
-  else if(key==='czarX'){bar(0.5,0.09,Math.PI/4,0,0);bar(0.5,0.09,-Math.PI/4,0,0);}
+  else if(key==='x'){bar(0.5,0.10,Math.PI/4,0,0);bar(0.5,0.10,-Math.PI/4,0,0);}
+  else if(key==='+'){bar(0.45,0.10,0,0,0);bar(0.10,0.42,0,0,0);}
+  else if(key==='o'){var o=new THREE.Mesh(new THREE.TorusGeometry(0.15,0.05,8,24),mat);o.castShadow=true;g.add(o);}
+  else if(key==='_'){bar(0.45,0.10,0,0,0);}
+  else if(key==='tri'){var s=new THREE.Shape();s.moveTo(0,0.18);s.lineTo(-0.20,-0.18);s.lineTo(0.20,-0.18);s.closePath();var tr=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:false}),mat);tr.position.z=-D/2;/* pusatkan: extrude 0..0.06 jadi -0.03..0.03, tidak tembus lensa */tr.castShadow=true;g.add(tr);}
+  else if(key==='caret'){bar(0.36,0.10,Math.PI/4,-0.085,-0.02);bar(0.36,0.10,-Math.PI/4,0.085,-0.02);/* batang lebih panjang biar ujung menyambung jadi lancip — 0.3 bikin dua puncak + takik di tengah */}
+  else if(key==='czarX'){bar(0.5,0.10,Math.PI/4,0,0);bar(0.5,0.10,-Math.PI/4,0,0);}
   else if(key==='czarSq'){bar(0.4,0.4,0,0,0);}
   return g;
 }
